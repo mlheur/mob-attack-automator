@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root version="3.0" release="1">
+
 	<announcement text="Mob Attack Automator (C) 2025 mlheur@gmail.com" font="emotefont" icon="MAA_icon" />
+
 	<properties>
 		<name>mob-attack-automator</name>
 		<version>1</version>
@@ -9,8 +11,25 @@
 		<ruleset><name>5E</name></ruleset>
 		<loadorder>125</loadorder>
 	</properties>
+
 	<base>
+
 		<icon name="MAA_icon" file="graphics/buttons/button_roll.png" />
+
+        <script name="MAA" file="scripts/MAA.lua" />
+
+        <string name="MAA_window_title">Mob Attack Automator</string>
+
+        <windowclass name="maa_wndclass_results">
+            <frame>utilitybox</frame>
+            <placement><size width="480" height="400" /></placement>
+            <sizelimits>
+                <minimum width="345" height="300" />
+                <dynamic />
+            </sizelimits>
+            <nodelete />
+        </windowclass>
+
 	</base>
 
 </root>
