@@ -20,7 +20,7 @@
 
         <string name="MAA_window_title">Mob Attack Automator</string>
 
-        <windowclass name="maa_wndclass_results">
+        <windowclass name="MAA">
             <frame>utilitybox</frame>
             <placement><size width="480" height="400" /></placement>
             <sizelimits>
@@ -28,6 +28,12 @@
                 <dynamic />
             </sizelimits>
             <nodelete />
+			<title>MAA_window_title</title>
+
+			<sheetdata>
+				<windowtitlebar />
+			</sheetdata>
+
         </windowclass>
 
 	</base>
