@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root version="3.0" release="1">
+	<announcement text="Mob Attack Automator (C) 2025 mlheur@gmail.com" font="emotefont" icon="MAA_icon" />
+	<properties>
+		<name>mob-attack-automator</name>
+		<version>1</version>
+		<author>mlheur</author>
+		<description>Automate mobs of critters, or squads of archers, all attacking a single target.</description>
+		<ruleset><name>5E</name></ruleset>
+		<loadorder>125</loadorder>
+	</properties>
+	<base>
+		<icon name="MAA_icon" file="graphics/buttons/button_roll.png" />
+	</base>
+
+</root>
