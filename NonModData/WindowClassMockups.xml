@@ -8,7 +8,7 @@
           <mxGeometry x="80" y="80" width="750" height="500" as="geometry" />
         </mxCell>
         <mxCell id="kXd_hG2lbu3m5RB6rQF9-3" value="window_title: &quot;Mob Attack Automator&quot;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="100" y="100" width="710" height="60" as="geometry" />
+          <mxGeometry x="285" y="80" width="340" height="30" as="geometry" />
         </mxCell>
         <mxCell id="kXd_hG2lbu3m5RB6rQF9-13" value="" style="group" vertex="1" connectable="0" parent="1">
           <mxGeometry x="400" y="330" width="80" height="60" as="geometry" />
@@ -23,7 +23,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="kXd_hG2lbu3m5RB6rQF9-23" value="" style="group" vertex="1" connectable="0" parent="1">
-          <mxGeometry x="520" y="170" width="290" height="390" as="geometry" />
+          <mxGeometry x="530" y="120" width="290" height="390" as="geometry" />
         </mxCell>
         <mxCell id="kXd_hG2lbu3m5RB6rQF9-12" value="Number:&lt;div&gt;AC&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="kXd_hG2lbu3m5RB6rQF9-23">
           <mxGeometry y="330" width="60" height="60" as="geometry" />
@@ -44,7 +44,7 @@
           <mxGeometry y="40" width="290" height="230" as="geometry" />
         </mxCell>
         <mxCell id="kXd_hG2lbu3m5RB6rQF9-24" value="" style="group" vertex="1" connectable="0" parent="1">
-          <mxGeometry x="100" y="170" width="290" height="390" as="geometry" />
+          <mxGeometry x="100" y="120" width="290" height="390" as="geometry" />
         </mxCell>
         <mxCell id="kXd_hG2lbu3m5RB6rQF9-20" value="" style="group" vertex="1" connectable="0" parent="kXd_hG2lbu3m5RB6rQF9-24">
           <mxGeometry y="330" width="290" height="60" as="geometry" />
