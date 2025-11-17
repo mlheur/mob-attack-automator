@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root>
+
+    <windowclass name="MAA">
+        <frame>utilitybox</frame>
+        <placement><size width="480" height="400" /></placement>
+        <sizelimits>
+            <minimum width="480" height="400" />
+        </sizelimits>
+        <sheetdata>
+            <windowtitlebar_utilitybox />
+            <anchor_content_utilitybox_top />
+            <MAA_subwindow name="MAA_attacker">
+                <class>MAA_attacker</class>
+                <anchored to="contentanchor" position="belowleft" />
+            </MAA_subwindow>
+            <MAA_subwindow name="MAA_target">
+                <class>MAA_target</class>
+                <anchored to="contentanchor" position="belowright" />
+            </MAA_subwindow>
+        </sheetdata>
+    </windowclass>
+
+    <windowclass name="MAA_attacker">
+        <sheetdata>
+			<anchor_content_groupbox_top />
+            <MAA_subheader>
+                <static textres="MAA_attacker_header" />
+            </MAA_subheader>
+            <MAA_portrait />
+            <MAA_name />
+        </sheetdata>
+    </windowclass>
+
+    <windowclass name="MAA_target">
+        <sheetdata>
+			<anchor_content_groupbox_top />
+            <MAA_subheader>
+                <static textres="MAA_target_header" />
+            </MAA_subheader>
+            <MAA_portrait />
+            <MAA_name />
+        </sheetdata>
+    </windowclass>
+
+
+</root>

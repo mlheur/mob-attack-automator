@@ -2,13 +2,64 @@ DEBUG = true;
 
 function dbg(...) if MAA.DEBUG then print("[MAA] "..unpack(arg)) end end
 
+function initSubwindow(hSubWnd, hWnd)
+	MAA.dbg("++MAA:initSubwindow()");
+
+	local sName = hSubWnd.getName()
+	MAA.dbg("  MAA:initSubwindow(): sName=hSubWnd.getName()==["..sName.."]");
+	local oClass,oValue = hSubWnd.getValue()
+
+	local sActiveCT = CombatManager.getActiveCT().getPath()
+	if sActiveCT == nil then
+		MAA.dbg("--MAA:initSubwindow(): FAILED: sActiveCT is nil");
+		return
+	end
+
+	local sIcon = nil
+	local sPath = sActiveCT
+
+	if sName == "MAA_target" then
+		local sTargetCT = nil
+		local nActiveCT_targets = DB.findNode(sActiveCT).getChild("targets")
+		if nActiveCT_targets == nil then
+			MAA.dbg("--MAA:initSubwindow(): FAILED: nActiveCT_targets is nil");
+			return
+		end
+		for sName,sNode in pairs(nActiveCT_targets.getChildren()) do
+			MAA.dbg("  MAA:initSubwindow(): sName=["..sName.."], sNode=["..sNode.getPath().."]")
+			sTargetCT = DB.getValue(sNode,"noderef")
+			break
+		end
+		if sTargetCT == nil then
+			MAA.dbg("--MAA:initSubwindow(): FAILED: sTargetCT is nil");
+			return
+		end
+		sPath = sTargetCT
+	end
+
+	hSubWnd.setValue(oClass,sPath)
+	MAA.dbg("  MAA:initSubwindow(): oClass=["..oClass.."] sPath=["..sPath.."]");
+	sIcon = DB.findNode(sPath).getChild("token").getValue()
+
+	local i,hControl = nil
+	for i,hControl in pairs(hSubWnd.subwindow.getControls()) do
+		if type(hControl) == "genericcontrol" and hControl.getName() == "token" then
+			hControl.setIcon(sIcon)
+			MAA.dbg("  MAA:initSubwindow(): setIcon("..sIcon..")")
+			break
+		end
+	end
+
+	MAA.dbg("--MAA:initSubwindow(): Success");
+end
+
 --------------------------------------------------------------------------------
 -- Main Entry Point
 --------------------------------------------------------------------------------
 function onInit()
 	MAA.dbg("++MAA:onInit()");
 	if User.isHost() then
-		tButton = {}
+		local tButton = {}
 		tButton["tooltipres"] = "MAA_window_title"
 		tButton["class"]      = "MAA"
 		tButton["path"]       = "MAA"
