@@ -5,7 +5,7 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="kXd_hG2lbu3m5RB6rQF9-2" value="top-level&amp;nbsp;maawnd_results" style="rounded=0;whiteSpace=wrap;html=1;verticalAlign=bottom;" parent="1" vertex="1">
-          <mxGeometry x="70" y="80" width="750" height="500" as="geometry" />
+          <mxGeometry x="70" y="80" width="750" height="460" as="geometry" />
         </mxCell>
         <mxCell id="ihiZs8g9HoaGnfDmMm3K-3" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=1 2;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
           <mxGeometry x="90" y="110" width="310" height="410" as="geometry" />
@@ -58,7 +58,7 @@
         <mxCell id="kXd_hG2lbu3m5RB6rQF9-6" value="Label: &lt;i&gt;name of attacker&lt;/i&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="kXd_hG2lbu3m5RB6rQF9-16" vertex="1">
           <mxGeometry y="230" width="290" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="kXd_hG2lbu3m5RB6rQF9-8" value="&lt;div&gt;128 x 128&lt;/div&gt;Image: &lt;i&gt;portrait of attacker&lt;/i&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="kXd_hG2lbu3m5RB6rQF9-16" vertex="1">
+        <mxCell id="kXd_hG2lbu3m5RB6rQF9-8" value="&lt;div&gt;96 x 96&lt;/div&gt;Image: &lt;i&gt;portrait of attacker&lt;/i&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="kXd_hG2lbu3m5RB6rQF9-16" vertex="1">
           <mxGeometry width="290" height="230" as="geometry" />
         </mxCell>
       </root>
