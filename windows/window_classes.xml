@@ -3,10 +3,7 @@
 
     <windowclass name="MAA">
         <frame>utilitybox</frame>
-        <placement><size width="480" height="400" /></placement>
-        <sizelimits>
-            <minimum width="480" height="400" />
-        </sizelimits>
+        <placement><size width="320" height="240" /></placement>
         <sheetdata>
             <windowtitlebar_utilitybox />
             <anchor_content_utilitybox_top />
