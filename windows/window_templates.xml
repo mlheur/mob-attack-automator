@@ -5,7 +5,7 @@
         <subwindow>
             <frame name="groupbox" />
             <anchored to="contentanchor">
-                <size width="116" height="190" />
+                <size width="116" height="192" />
             </anchored>
             <activate />
             <fastinit />
@@ -44,16 +44,16 @@
 
     <template name="MAA_name">
         <string_static name="name">
-			<controlline />
             <anchored to="contentanchor">
                 <top relation="relative" />
-                <left offset="2" />
-                <right offset="2" />
+                <left offset="3" />
+                <right offset="-3" />
                 <size height="20" />
             </anchored>
             <activate />
             <fastinit />
             <center />
+			<controlline />
             <readonly />
             <datasource>.name</datasource>
         </string_static>

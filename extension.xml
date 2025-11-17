@@ -16,6 +16,8 @@
         <string name="MAA_window_title">Mob Attack Automator</string>
         <string name="MAA_attacker_header">Mobbers</string>
         <string name="MAA_target_header">Victim</string>
+        <string name="MAA_label_ac">AC:</string>
+        <string name="MAA_label_atk_bonus">ATK:</string>
 
 		<icon name="MAA_icon" file="graphics/buttons/button_roll.png" />
 

@@ -3,7 +3,7 @@
 
     <windowclass name="MAA">
         <frame>utilitybox</frame>
-        <placement><size width="320" height="240" /></placement>
+        <placement><size width="320" height="265" /></placement>
         <sheetdata>
             <windowtitlebar_utilitybox />
             <anchor_content_utilitybox_top />
@@ -15,6 +15,22 @@
                 <class>MAA_target</class>
                 <anchored to="contentanchor" position="belowright" />
             </MAA_subwindow>
+			<combobox name="MAA_attack_options">
+				<anchored to="MAA_attacker">
+                    <left offset="12" />
+                    <top anchor="bottom" />
+                    <size height="24" width="128" />
+                </anchored>
+				<default textres="ps_default_groupability" />
+				<listdirection>up</listdirection>
+				<listmaxsize>8</listmaxsize>
+				<script>
+					function onInit()
+						super.onInit()
+                        MAA.initAttackBonus(self,window)
+					end
+				</script>
+			</combobox>
         </sheetdata>
     </windowclass>
 
@@ -26,6 +42,27 @@
             </MAA_subheader>
             <MAA_portrait />
             <MAA_name />
+            <basicnumber name="atk_bonus">
+                <anchored to="contentanchor">
+                    <top relation="relative" offset="5" />
+                    <right offset="-3"/>
+                    <size height="24" width="36" />
+                </anchored>
+                <active />
+                <readonly />
+                <fastinit />
+            </basicnumber>
+            <label name="label_atk_bonus">
+                <anchored to="atk_bonus">
+                    <top />
+                    <right anchor="left" offset="-8" />
+                    <size height="24" />
+                </anchored>
+                <static textres="MAA_label_atk_bonus" />
+                <activate />
+                <fastinit />
+                <readonly />
+            </label>
         </sheetdata>
     </windowclass>
 
@@ -37,6 +74,28 @@
             </MAA_subheader>
             <MAA_portrait />
             <MAA_name />
+            <basicnumber name="ac">
+                <anchored to="contentanchor">
+                    <top relation="relative" offset="5" />
+                    <left offset="30" />
+                    <size height="24" width="36" />
+                </anchored>
+                <active />
+                <fastinit />
+                <readonly />
+                <datasource>.ac</datasource>
+            </basicnumber>
+            <label name="label_ac">
+                <anchored to="ac">
+                    <top />
+                    <right anchor="left" offset="-8" />
+                    <size height="24" />
+                </anchored>
+                <static textres="MAA_label_ac" />
+                <activate />
+                <fastinit />
+                <readonly />
+            </label>
         </sheetdata>
     </windowclass>
 
