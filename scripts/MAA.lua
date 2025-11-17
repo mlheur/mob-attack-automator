@@ -2,6 +2,47 @@ DEBUG = true
 
 function dbg(...) if MAA.DEBUG then print("[MAA] "..unpack(arg)) end end
 
+
+--------------------------------------------------------------------------------
+-- Handling the combobox for the attack actions on the NPC
+--------------------------------------------------------------------------------
+function initAttackBonus(hSubWnd, hWnd)
+	MAA.dbg("++MAA:initAttackBonus()")
+	local nActiveCT = CombatManager.getActiveCT()
+	local nActions = nActiveCT.getChild("actions")
+	for k,v in pairs(nActions.getChildren()) do
+		sAction = v.getChild("name").getValue()
+		hSubWnd.addItem(sAction)
+	end
+	updateAttackBonus(hSubWnd,hWnd)
+	MAA.dbg("--MAA:initAttackBonus()")
+end
+
+function updateAttackBonus(hSubWnd, hWnd)
+	MAA.dbg("++MAA:updateAttackBonus()")
+	local nActiveCT = CombatManager.getActiveCT()
+	local nActions = nActiveCT.getChild("actions")
+	local sSelectedAction = hSubWnd.getValue()
+	for k,v in pairs(nActions.getChildren()) do
+		sAction = v.getChild("name").getValue()
+		if sAction == sSelectedAction then
+			sValue = v.getChild("value").getValue()
+			
+			local nStart,nEnd = string.find(sValue, "ATK: ([-+]?%d)")
+			nStart = nStart + 5
+			local sAtkBonus = string.sub(sValue,nStart,nEnd)
+
+			MAA.dbg("  MAA:updateAttackBonus(): nStart=["..nStart.."] nEnd=["..nEnd.."] sAtkBonus=["..sAtkBonus.."]")
+
+			hWnd["MAA_attacker"].subwindow["atk_bonus"].setValue(sAtkBonus)
+			break
+		end
+	end
+	MAA.dbg("--MAA:updateAttackBonus()")
+end
+--------------------------------------------------------------------------------
+-- One function to init both Attacker and Target subwindow data from CT data.
+--------------------------------------------------------------------------------
 function initSubwindow(hSubWnd, hWnd)
 	MAA.dbg("++MAA:initSubwindow()")
 
@@ -9,17 +50,16 @@ function initSubwindow(hSubWnd, hWnd)
 	MAA.dbg("  MAA:initSubwindow(): sName=hSubWnd.getName()==["..sName.."]")
 	local oClass,oValue = hSubWnd.getValue()
 
-	local sActiveCT = CombatManager.getActiveCT().getPath()
-	local sActor = sActiveCT
+	local sActor = CombatManager.getActiveCT().getPath()
 
-	if sActiveCT == nil then
-		MAA.dbg("--MAA:initSubwindow(): FAILED: sActiveCT is nil")
+	if sActor == nil then
+		MAA.dbg("--MAA:initSubwindow(): FAILED: sActor is nil")
 		return
 	end
 
 	if sName == "MAA_target" then
 		local sTargetCT = nil
-		local nActiveCT_targets = DB.findNode(sActiveCT).getChild("targets")
+		local nActiveCT_targets = DB.findNode(sActor).getChild("targets")
 		if nActiveCT_targets == nil then
 			MAA.dbg("--MAA:initSubwindow(): FAILED: nActiveCT_targets is nil")
 			return

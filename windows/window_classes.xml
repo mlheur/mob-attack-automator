@@ -3,7 +3,7 @@
 
     <windowclass name="MAA">
         <frame>utilitybox</frame>
-        <placement><size width="320" height="265" /></placement>
+        <placement><size width="320" height="270" /></placement>
         <sheetdata>
             <windowtitlebar_utilitybox />
             <anchor_content_utilitybox_top />
@@ -19,7 +19,7 @@
 				<anchored to="MAA_attacker">
                     <left offset="12" />
                     <top anchor="bottom" />
-                    <size height="24" width="128" />
+                    <size height="24" width="190" />
                 </anchored>
 				<default textres="ps_default_groupability" />
 				<listdirection>up</listdirection>
@@ -29,6 +29,9 @@
 						super.onInit()
                         MAA.initAttackBonus(self,window)
 					end
+                    function onValueChanged()
+                        MAA.updateAttackBonus(self,window)
+                    end
 				</script>
 			</combobox>
         </sheetdata>
