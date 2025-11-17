@@ -2,20 +2,58 @@ DEBUG = true
 
 function dbg(...) if MAA.DEBUG then print("[MAA] "..unpack(arg)) end end
 
+function CountAttackers(nActor)
+	MAA.dbg("++MAA:CountAttackers()")
+	local sClass,sLink = nActor.getChild("sourcelink").getValue()
+	local nInit        = nActor.getChild("initresult").getValue()
+	MAA.dbg("  MAA:CountAttackers(): sClass=["..sClass.."] sLink=["..sLink.."] nInit=["..nInit.."]")
+	local nAttackers = 0
+	for sNodeID,nNPC in pairs(DB.getChildren("combattracker.list")) do
+		local sClassNPC  = nNPC.getChild("link").getValue()
+		if sClassNPC == "npc" then
+			local _,sLinkNPC = nNPC.getChild("sourcelink").getValue()
+			local nInitNPC   = nNPC.getChild("initresult").getValue()
+			if sClassNPC == nil then sClassNPC = "nil" end
+			if sLinkNPC == nil then sLinkNPC = "nil" end
+			if nInitNPC == nil then nInitNPC = "nil" end
+			MAA.dbg("  MAA:CountAttackers(): sClassNPC=["..sClassNPC.."] sLinkNPC=["..sLinkNPC.."] nInitNPC=["..nInitNPC.."]")
+			if sClassNPC == sClass and sLinkNPC == sLink and nInitNPC == nInit then
+				MAA.dbg("  MAA:CountAttackers(): BUMP!")
+				nAttackers = nAttackers + 1
+			end
+		end
+	end
+
+	MAA.dbg("--MAA:CountAttackers(): nAttackers=["..nAttackers.."]")
+	return nAttackers
+end
+
+--------------------------------------------------------------------------------
+-- onButtonPressed
+--------------------------------------------------------------------------------
+function processRoll(hSubWnd, hWnd)
+	MAA.dbg("++MAA:processRoll()")
+	MAA.dbg("--MAA:processRoll()")
+end
 
 --------------------------------------------------------------------------------
 -- Handling the combobox for the attack actions on the NPC
 --------------------------------------------------------------------------------
-function initAttackBonus(hSubWnd, hWnd)
-	MAA.dbg("++MAA:initAttackBonus()")
+function initAttackAction(hSubWnd, hWnd)
+	MAA.dbg("++MAA:initAttackAction()")
 	local nActiveCT = CombatManager.getActiveCT()
 	local nActions = nActiveCT.getChild("actions")
+	if nActions == nil then
+		MAA.dbg("--MAA:initAttackAction(): FATAL, PC has no actions to choose from")
+		return
+	end
+	local sAction = ""
 	for k,v in pairs(nActions.getChildren()) do
 		sAction = v.getChild("name").getValue()
 		hSubWnd.addItem(sAction)
 	end
-	updateAttackBonus(hSubWnd,hWnd)
-	MAA.dbg("--MAA:initAttackBonus()")
+	hSubWnd.setValue(sAction)
+	MAA.dbg("--MAA:initAttackAction()")
 end
 
 function updateAttackBonus(hSubWnd, hWnd)
@@ -40,6 +78,7 @@ function updateAttackBonus(hSubWnd, hWnd)
 	end
 	MAA.dbg("--MAA:updateAttackBonus()")
 end
+
 --------------------------------------------------------------------------------
 -- One function to init both Attacker and Target subwindow data from CT data.
 --------------------------------------------------------------------------------
@@ -48,18 +87,25 @@ function initSubwindow(hSubWnd, hWnd)
 
 	local sName = hSubWnd.getName()
 	MAA.dbg("  MAA:initSubwindow(): sName=hSubWnd.getName()==["..sName.."]")
+
 	local oClass,oValue = hSubWnd.getValue()
 
-	local sActor = CombatManager.getActiveCT().getPath()
+	local nActor = CombatManager.getActiveCT()
+	if nActor == nil then
+		MAA.dbg("--MAA:initSubwindow(): FAILED: nActor is nil")
+		return
+	end
 
+	local sActor = nActor.getPath()
 	if sActor == nil then
 		MAA.dbg("--MAA:initSubwindow(): FAILED: sActor is nil")
 		return
 	end
 
+	local nAttackers = 1
 	if sName == "MAA_target" then
 		local sTargetCT = nil
-		local nActiveCT_targets = DB.findNode(sActor).getChild("targets")
+		local nActiveCT_targets = nActor.getChild("targets")
 		if nActiveCT_targets == nil then
 			MAA.dbg("--MAA:initSubwindow(): FAILED: nActiveCT_targets is nil")
 			return
@@ -74,7 +120,14 @@ function initSubwindow(hSubWnd, hWnd)
 			return
 		end
 		sActor = sTargetCT
+	else
+		sClass = nActor.getChild("link").getValue()
+		if sClass == "npc" then
+			nAttackers = CountAttackers(nActor)
+		end
 	end
+
+	hWnd["qty_attackers"].setValue(nAttackers)
 
 	hSubWnd.setValue(oClass,sActor)
 	MAA.dbg("  MAA:initSubwindow(): oClass=["..oClass.."] sActor=["..sActor.."]")

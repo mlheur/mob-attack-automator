@@ -5,7 +5,7 @@
         <subwindow>
             <frame name="groupbox" />
             <anchored to="contentanchor">
-                <size width="116" height="192" />
+                <size width="140" height="192" />
             </anchored>
             <activate />
             <fastinit />

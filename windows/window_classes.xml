@@ -7,19 +7,19 @@
         <sheetdata>
             <windowtitlebar_utilitybox />
             <anchor_content_utilitybox_top />
-            <MAA_subwindow name="MAA_attacker">
-                <class>MAA_attacker</class>
-                <anchored to="contentanchor" position="belowleft" />
-            </MAA_subwindow>
             <MAA_subwindow name="MAA_target">
                 <class>MAA_target</class>
                 <anchored to="contentanchor" position="belowright" />
             </MAA_subwindow>
+            <MAA_subwindow name="MAA_attacker">
+                <class>MAA_attacker</class>
+                <anchored to="contentanchor" position="belowleft" />
+            </MAA_subwindow>
 			<combobox name="MAA_attack_options">
 				<anchored to="MAA_attacker">
-                    <left offset="12" />
                     <top anchor="bottom" />
-                    <size height="24" width="190" />
+                    <left offset="12" />
+                    <size height="24" width="96" />
                 </anchored>
 				<default textres="ps_default_groupability" />
 				<listdirection>up</listdirection>
@@ -27,13 +27,46 @@
 				<script>
 					function onInit()
 						super.onInit()
-                        MAA.initAttackBonus(self,window)
+                        MAA.initAttackAction(self,window)
 					end
                     function onValueChanged()
                         MAA.updateAttackBonus(self,window)
                     end
 				</script>
 			</combobox>
+            <label name="label_qty_attackers">
+				<anchored to="MAA_attacker">
+                    <top anchor="bottom" />
+                    <left parent="MAA_attack_options" anchor="right" offset="12"/>
+                    <size height="24" width="24" />
+                </anchored>
+                <static textres="MAA_label_qty_attackers" />
+                <activate />
+                <right />
+                <fastinit />
+                <readonly />
+            </label>
+            <basicnumber name="qty_attackers">
+				<anchored to="MAA_attacker">
+                    <top anchor="bottom" />
+                    <left parent="label_qty_attackers" anchor="right" offset="6" />
+                    <size height="24" width="36" />
+                </anchored>
+                <active />
+                <fastinit />
+            </basicnumber>
+            <button_dialog_roll>
+				<anchored to="MAA_target">
+                    <top anchor="bottom" />
+                    <right offset="-12" />
+                    <size height="24" width="36" />
+                </anchored>
+                <script>
+                    function onButtonPress()
+                        MAA.processRoll(self,window);
+                    end
+                </script>
+            </button_dialog_roll>
         </sheetdata>
     </windowclass>
 
@@ -51,6 +84,7 @@
                     <right offset="-3"/>
                     <size height="24" width="36" />
                 </anchored>
+    			<displaysign />
                 <active />
                 <readonly />
                 <fastinit />
