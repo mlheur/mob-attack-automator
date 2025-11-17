@@ -10,13 +10,12 @@ function initSubwindow(hSubWnd, hWnd)
 	local oClass,oValue = hSubWnd.getValue()
 
 	local sActiveCT = CombatManager.getActiveCT().getPath()
+	local sActor = sActiveCT
+
 	if sActiveCT == nil then
 		MAA.dbg("--MAA:initSubwindow(): FAILED: sActiveCT is nil");
 		return
 	end
-
-	local sIcon = nil
-	local sPath = sActiveCT
 
 	if sName == "MAA_target" then
 		local sTargetCT = nil
@@ -34,21 +33,11 @@ function initSubwindow(hSubWnd, hWnd)
 			MAA.dbg("--MAA:initSubwindow(): FAILED: sTargetCT is nil");
 			return
 		end
-		sPath = sTargetCT
+		sActor = sTargetCT
 	end
 
-	hSubWnd.setValue(oClass,sPath)
-	MAA.dbg("  MAA:initSubwindow(): oClass=["..oClass.."] sPath=["..sPath.."]");
-	sIcon = DB.findNode(sPath).getChild("token").getValue()
-
-	local i,hControl = nil
-	for i,hControl in pairs(hSubWnd.subwindow.getControls()) do
-		if type(hControl) == "genericcontrol" and hControl.getName() == "token" then
-			hControl.setIcon(sIcon)
-			MAA.dbg("  MAA:initSubwindow(): setIcon("..sIcon..")")
-			break
-		end
-	end
+	hSubWnd.setValue(oClass,sActor)
+	MAA.dbg("  MAA:initSubwindow(): oClass=["..oClass.."] sActor=["..sActor.."]");
 
 	MAA.dbg("--MAA:initSubwindow(): Success");
 end
