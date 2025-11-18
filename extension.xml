@@ -11,11 +11,6 @@
 	</properties>
 	<base>
         <string name="MAA_window_title">Mob Attack Automator</string>
-        <string name="MAA_attacker_header">Mobbers</string>
-        <string name="MAA_target_header">Victim</string>
-        <string name="MAA_label_ac">AC:</string>
-        <string name="MAA_label_atk_bonus">ATK:</string>
-        <string name="MAA_label_qty_attackers">Qty</string>
 		<icon name="MAA_icon" file="graphics/buttons/button_roll.png" />
         <script name="MAA" file="scripts/MAA.lua" />
 		<includefile source="windows/window_classes.xml" />
