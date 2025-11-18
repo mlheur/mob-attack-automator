@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root>
 
+    <windowclass name="MAA">
+		<windowmenu>
+			<nolink />
+		</windowmenu>		<frame>utilitybox</frame>
+		<sheetdata>
+			<windowtitlebar_utilitybox name="title" />
+			<windowmenubar_utilitybox name="menubar" />
+
+			<anchor_content_utilitybox_top />
+			<anchor_content_utilitybox_bottom />
+
+            <MAA_groupbox name="attacker" />
+            <MAA_groupbox name="target" />
+
+		</sheetdata>
+    </windowclass>
+
 </root>

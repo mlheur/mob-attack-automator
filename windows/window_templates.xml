@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root>
 
+    <template name="MAA_groupbox">
+        <subwindow>
+            <frame name="groupbox" />
+            <anchored>
+                <top parent="contentanchor" relation="relative" />
+                <left parent="contentanchor" anchor="left" />
+                <right parent="contentanchor" anchor="right" />
+                <size height="112" />
+            </anchored>
+            <activate/>
+        </subwindow>
+    </template>
+
 </root>
