@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root>
 
-    <windowclass name="MAA">
+	<windowclass name="MAA">
+		<frame>utilitybox</frame>
+		<sizelimits>
+			<!-- Height: 30(frametop) + 288(2xgroupbox) + 24(button) + 24(framebottom) -->
+			<minimum width="400" height="410" />
+			<dynamic />
+		</sizelimits>
+		<placement>
+			<size width="400" height="410" />
+			<nosave />
+		</placement>
 		<windowmenu>
 			<nolink />
-		</windowmenu>		<frame>utilitybox</frame>
+		</windowmenu>
 		<sheetdata>
 			<windowtitlebar_utilitybox name="title" />
 			<windowmenubar_utilitybox name="menubar" />
@@ -12,10 +22,77 @@
 			<anchor_content_utilitybox_top />
 			<anchor_content_utilitybox_bottom />
 
-            <MAA_groupbox name="attacker" />
-            <MAA_groupbox name="target" />
+			<MAA_groupbox name="MAA_attacker">
+				<class>MAA_attacker</class>
+				<datasource>.attacker</datasource>
+			</MAA_groupbox>
+			<MAA_groupbox name="MAA_target">
+				<class>MAA_target</class>
+				<datasource>.target</datasource>
+			</MAA_groupbox>
 
+			<MAA_button_roll name="MAA_button_roll" />
+
+			<resize />
 		</sheetdata>
-    </windowclass>
+	</windowclass>
+
+	<windowclass name="MAA_attacker">
+		<sheetdata>
+			<anchor_content_groupbox_top />
+			<anchor_content_groupbox_bottom />
+			<MAA_subtitle>
+				<static textres="MAA_label_attacker" />
+			</MAA_subtitle>
+			<MAA_button_refresh />
+			<MAA_groupbox_inner />
+			<MAA_portrait />
+			<MAA_name />
+			<MAA_number name="atk_bonus">
+				<datasource>.atk_bonus</datasource>
+				<anchored>
+					<top parent="inneranchor" anchor="bottom" />
+				</anchored>
+			</MAA_number>
+			<MAA_number_label name="atk_bonus_label">
+				<anchored to="atk_bonus" />
+				<static textres="MAA_atk_bonus_label" />
+			</MAA_number_label>
+			<MAA_number name="qty_attackers">
+				<datasource>.qty_attackers</datasource>
+				<anchored>
+					<top parent="atk_bonus" anchor="bottom" offset="4"/>
+				</anchored>
+			</MAA_number>
+			<MAA_number_label name="qty_attackers_label">
+				<anchored to="qty_attackers" />
+				<static textres="MAA_qty_attackers_label" />
+			</MAA_number_label>
+		</sheetdata>
+	</windowclass>
+
+	<windowclass name="MAA_target">
+		<sheetdata>
+			<anchor_content_groupbox_top />
+			<anchor_content_groupbox_bottom />
+			<MAA_subtitle>
+				<static textres="MAA_label_target" />
+			</MAA_subtitle>
+			<MAA_button_refresh />
+			<MAA_groupbox_inner />
+			<MAA_portrait />
+			<MAA_name />
+			<MAA_number name="target_ac">
+				<datasource>.target_ac</datasource>
+				<anchored>
+					<top parent="inneranchor" anchor="bottom" />
+				</anchored>
+			</MAA_number>
+			<MAA_number_label name="target_ac_label">
+				<anchored to="target_ac" />
+				<static textres="MAA_target_ac_label" />
+			</MAA_number_label>
+		</sheetdata>
+	</windowclass>
 
 </root>

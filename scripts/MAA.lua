@@ -17,6 +17,7 @@ function onInit()
 		tButton["path"]       = "MAA"
 		tButton["sIcon"]      = "button_action_attack"
 		DesktopManager.registerSidebarToolButton(tButton)
+		Interface.openWindow("MAA", "MAA")
 	end
 	MAA.dbg("--MAA:onInit()")
 end

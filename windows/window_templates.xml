@@ -1,17 +1,119 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root>
 
-    <template name="MAA_groupbox">
-        <subwindow>
-            <frame name="groupbox" />
-            <anchored>
-                <top parent="contentanchor" relation="relative" />
-                <left parent="contentanchor" anchor="left" />
-                <right parent="contentanchor" anchor="right" />
-                <size height="112" />
-            </anchored>
-            <activate/>
-        </subwindow>
-    </template>
+	<template name="MAA_groupbox">
+		<subwindow>
+			<activate />
+			<frame name="groupbox" />
+			<anchored height="160">
+				<top parent="contentanchor" relation="relative" />
+				<left parent="contentanchor" anchor="left" />
+				<right parent="contentanchor" anchor="right" />
+			</anchored>
+		</subwindow>
+	</template>
+
+	<template name="MAA_subtitle">
+		<stringcontrol name="subtitle">
+			<activate />
+			<readonly />
+			<nodrag />
+			<center />
+			<font>subwindowsmalltitle</font>
+			<frame name="metalplate" offset="4,4,4,4" />
+			<anchored to="contentanchor" height="24">
+				<top />
+				<left />
+				<right offset="-32"/>
+			</anchored>
+		</stringcontrol>
+	</template>
+
+	<template name="MAA_button_refresh">
+		<button_refresh name="refresh">
+			<anchored to="subtitle" width="20" height="20">
+				<left anchor="right" offset="10" />
+				<top offset="2" />
+			</anchored>
+		</button_refresh>
+	</template>
+
+	<template name="MAA_groupbox_inner">
+		<genericcontrol name="inneranchor">
+			<hidden />
+			<anchored>
+				<top parent="subtitle" anchor="bottom" offset="10" height="0" />
+				<left parent="subtitle" />
+				<right parent="refresh" />
+			</anchored>
+		</genericcontrol>
+	</template>
+
+	<template name="MAA_portrait">
+		<tokenfield name="token">
+			<datasource>.token</datasource>
+			<activate />
+			<empty>token_empty</empty>
+			<anchored width="96" height="96" to="inneranchor">
+				<top />
+				<left />
+			</anchored>
+			<backcolor>FF00FF00</backcolor>
+		</tokenfield>
+	</template>
+
+	<template name="MAA_name">
+		<stringfield name="name">
+			<datasource>.name</datasource>
+			<activate />
+			<controlline />
+			<font>charsheet_header</font>
+			<anchored to="token" height="48">
+				<bottom />
+				<left anchor="right" />
+				<right parent="refresh" />
+			</anchored>
+			<backcolor>FF0000FF</backcolor>
+		</stringfield>
+	</template>
+
+	<template name="MAA_number">
+		<basicnumber>
+			<anchored>
+				<right parent="inneranchor" />
+				<size height="20" width="36" />
+			</anchored>
+		</basicnumber>
+	</template>
+
+	<template name="MAA_number_label">
+		<label>
+			<anchored>
+				<top />
+				<right anchor="left" offset="-12" />
+				<size height="20" width="36" />
+			</anchored>
+			<right />
+		</label>
+	</template>
+
+	<template name="MAA_button_roll">
+		<button_text_sm>
+			<activate/>
+			<state textres="MAA_label_button_roll" />
+			<font>button-white</font>
+			<stateframe>
+				<disabled name="buttondisabled" offset="2,2,2,2" nobaseframe="true" />
+				<pressed name="buttondown" offset="2,2,2,2" nobaseframe="true" />
+			</stateframe>
+			<pressed offset="1,1" />
+			<frame name="buttonup" offset="2,2,2,2" />
+			<anchored height="24">
+				<top parent="contentanchor" relation="relative" offset="8" />
+				<left parent="contentanchor" anchor="left" offset="32" />
+				<right parent="contentanchor" anchor="right" offset="-32" />
+			</anchored>
+		</button_text_sm>
+	</template>
 
 </root>
