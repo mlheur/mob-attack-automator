@@ -29,7 +29,7 @@ function resetWindowPointers()
 	self.WindowPointers["target"]["token"] = nil
 	self.WindowPointers["target"]["ac"] = nil
 	self.WindowPointers["attack_roll"] = nil
-	MAA.dbg("--MAA:resetWindowPointers()")
+	MAA.dbg("--MAA:resetWindowPointers(): success")
 end
 
 function addWindowPointers(hWnd)
@@ -57,17 +57,35 @@ function addWindowPointers(hWnd)
 			end
 		end
 	end
-	MAA.dbg("--MAA:addWindowPointers()")
+	MAA.dbg("--MAA:addWindowPointers(): success")
 end
 
 function updateAll()
 	MAA.dbg("++MAA:updateAll()")
-	self.WindowPointers["attacker"]["name"].setValue("NameOfAttackers")
+
+	local nActiveCT = CombatManager.getActiveCT()
+	if nActiveCT == nil then
+		MAA.dbg("--MAA:updateAll(): CombatManager.getActiveCT() returned nil")
+		return
+	end
+
+	local sRecord,sLink = DB.getValue(nActiveCT,"link")
+	if not (sRecord == "npc") then
+		MAA.dbg("--MAA:updateAll(): CombatManager.getActiveCT().link.class is not 'npc'")
+		return
+	end
+
+	local sAttackerName = DB.getValue(nActiveCT,"name","sAttackerName==nil")
+
+
+
+	-- All gates passed, update the MAA window.
+	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
 	self.WindowPointers["attacker"]["atk"].setValue(3)
 	self.WindowPointers["attacker"]["qty"].setValue(22)
 	self.WindowPointers["target"]["name"].setValue("NameOfTargets")
 	self.WindowPointers["target"]["ac"].setValue(15)
-	MAA.dbg("--MAA:updateAll()")
+	MAA.dbg("--MAA:updateAll(): success")
 end
 
 --------------------------------------------------------------------------------
@@ -76,22 +94,24 @@ end
 function addHandlersDB(hWnd)
 	MAA.dbg("++MAA:addHandlersDB()")
 	DB.addHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT )
-	MAA.dbg("--MAA:addHandlersDB()")
+	MAA.dbg("--MAA:addHandlersDB(): success")
 end
 
 function removeHandlersDB()
 	MAA.dbg("++MAA:removeHandlersDB()")
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT )
-	MAA.dbg("--MAA:removeHandlersDB()")
+	MAA.dbg("--MAA:removeHandlersDB(): success")
 end
 
-function onUpdateActiveCT(nodeUpdated)
-	MAA.dbg("++MAA:onUpdateActiveCT(): Executed")
+function onUpdateActiveCT(nU)
+	MAA.dbg("++MAA:onUpdateActiveCT()")
 	-- prevent excess execution by only firing when _this_ node's active value becomes true
-	if nodeUpdated.getChild("active").getValue() == false then
-		MAA.dbg("--MAA:onUpdateActiveCT(): Skipped")
+	local bActive = nU.getValue()
+	if bActive == 0 then
+		MAA.dbg("--MAA:onUpdateActiveCT(): bActive is false, only update on the active CT entry, if any exist.")
 		return
 	end
+
 	self.updateAll()
 	MAA.dbg("--MAA:onUpdateActiveCT(): Executed")
 end
@@ -101,21 +121,20 @@ end
 --------------------------------------------------------------------------------
 function hWnd_onInit(hWnd)
 	MAA.dbg("++MAA:hWnd_onInit()")
+	self.addHandlersDB()
 	self.addWindowPointers(hWnd)
 	self.updateAll()
-	MAA.dbg("--MAA:hWnd_onInit()")
+	MAA.dbg("--MAA:hWnd_onInit(): success")
 end
 
 function hBtn_onRefresh(hCtl,hWnd)
 	MAA.dbg("++MAA:hBtn_onRefresh()")
 	self.updateAll()
-	MAA.dbg("--MAA:hBtn_onRefresh()")
+	MAA.dbg("--MAA:hBtn_onRefresh(): success")
 end
 
 function hBtn_onRollAttack(hCtl,hWnd)
-	MAA.dbg("++MAA:hBtn_onRollAttack()")
-	self.updateAll()
-	MAA.dbg("--MAA:hBtn_onRollAttack()")
+	MAA.dbg("+-MAA:hBtn_onRollAttack(): ToDo - not implemented")
 end
 
 --------------------------------------------------------------------------------
@@ -136,13 +155,16 @@ function onInit()
 	--     that will call MAA.addWindowPointers()
 	--       that will call MAA.resetWindowPointers()
 	--     and will call MAA.updateAll()
-	MAA.dbg("--MAA:onInit()")
+	MAA.dbg("--MAA:onInit(): success")
 end
 
+--------------------------------------------------------------------------------
+-- MAA manager exit routine, also called by window.onClose()
+--------------------------------------------------------------------------------
 function onClose()
 	MAA.dbg("++MAA:onClose()")
 	self.removeHandlersDB()
 	self.resetWindowPointers()
 	DB.deleteNode(self.WNDDATA)
-	MAA.dbg("--MAA:onClose()")
+	MAA.dbg("--MAA:onClose(): success")
 end
