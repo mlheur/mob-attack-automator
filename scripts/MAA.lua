@@ -75,15 +75,40 @@ function updateAll()
 		return
 	end
 
-	local sAttackerName = DB.getValue(nActiveCT,"name","sAttackerName==nil")
+	local nActiveTargetsList = nActiveCT.getChild("targets")
+	if (nActiveTargetsList == nil) or (not (nActiveTargetsList.getChildCount() == 1)) then
+		MAA.dbg("--MAA:updateAll(): nActiveTargetsList is nil or nActiveTargetsList.getChildCount() is not 1")
+		return
+	end
 
+	local nTargetNoderef = nil
+	for i,n in pairs(nActiveTargetsList.getChildren()) do
+		nTargetNoderef = n.getChild("noderef")
+	end
+	if nTargetNoderef == nil then
+		MAA.dbg("--MAA:updateAll(): nTargetNoderef is nil")
+		return
+	end
+
+	local sTargetNoderef = nTargetNoderef.getValue()
+	local nTarget = DB.findNode(sTargetNoderef)
+	if nTarget == nil then
+		MAA.dbg("--MAA:updateAll(): CombatManager resolved the target to nil")
+		return
+	end
+
+
+
+
+	local sAttackerName = DB.getValue(nActiveCT,"name","sAttackerName==nil")
+	local sTargetName = DB.getValue(nTarget,"name","sTargetName==nil")
 
 
 	-- All gates passed, update the MAA window.
 	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
 	self.WindowPointers["attacker"]["atk"].setValue(3)
 	self.WindowPointers["attacker"]["qty"].setValue(22)
-	self.WindowPointers["target"]["name"].setValue("NameOfTargets")
+	self.WindowPointers["target"]["name"].setValue(sTargetName)
 	self.WindowPointers["target"]["ac"].setValue(15)
 	MAA.dbg("--MAA:updateAll(): success")
 end
