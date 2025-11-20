@@ -4,11 +4,11 @@
 	<windowclass name="MAA">
 		<frame>utilitybox</frame>
 		<sizelimits>
-			<minimum width="400" height="410" />
+			<minimum width="480" height="410" />
 			<dynamic />
 		</sizelimits>
 		<placement>
-			<size width="400" height="410" />
+			<size width="480" height="410" />
 			<nosave />
 		</placement>
 		<windowmenu>
@@ -68,6 +68,7 @@
 				<anchored to="qty" />
 				<static textres="MAA_qty_label" />
 			</MAA_number_label>
+			<MAA_action_cycler />
 		</sheetdata>
 	</windowclass>
 
@@ -91,6 +92,26 @@
 				<anchored to="ac" />
 				<static textres="MAA_ac_label" />
 			</MAA_number_label>
+		</sheetdata>
+	</windowclass>
+
+	<windowclass name="MAA_action_cycler">
+		<sheetdata>
+			<anchor_content_top />
+			<anchor_content_bottom />
+			<MAA_button_cycler name="cycle_left">
+				<anchored>
+					<left />
+				</anchored>
+				<icon normal="arrow_sm_left" />
+			</MAA_button_cycler>
+			<MAA_button_cycler name="cycle_right">
+				<anchored>
+					<right />
+				</anchored>
+				<icon normal="arrow_sm_right" />
+			</MAA_button_cycler>
+			<MAA_action_value />
 		</sheetdata>
 	</windowclass>
 

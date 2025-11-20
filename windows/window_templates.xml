@@ -125,7 +125,6 @@
 		<button_text_sm>
 			<activate />
 			<fastinit />
-			<activate/>
 			<state textres="MAA_label_button_roll" />
 			<font>button-white</font>
 			<stateframe>
@@ -145,6 +144,48 @@
 				end
 			</script>
 		</button_text_sm>
+	</template>
+
+	<template name="MAA_action_cycler">
+		<subwindow name="action_cycler">
+			<activate />
+			<fastinit />
+			<anchored to="token" height="36">
+				<top offset="2" />
+				<left anchor="right" offset="12" />
+				<right parent="contentanchor" offset="-84" />
+			</anchored>
+			<class>MAA_action_cycler</class>
+		</subwindow>
+	</template>
+
+	<template name="MAA_button_cycler">
+		<buttoncontrol>
+			<active />
+			<fastinit />
+			<anchored to="contentanchor" width="12">
+				<top />
+				<bottom parent="bottomanchor" />
+			</anchored>
+		</buttoncontrol>
+	</template>
+
+	<template name="MAA_action_value">
+		<basicstringc name="action">
+			<active />
+			<fastinit />
+			<center />
+			<font>charsheet_header</font>
+			<frame mergerule="replace" name="fielddark" offset="7,5,7,5" />
+			<stateframe>
+				<hover name="fieldfocus" offset="7,5,7,5" hidereadonly="true" />
+			</stateframe>
+			<anchored to="cycle_left">
+				<top /><bottom />
+				<left anchor="right" offset="8" />
+				<right anchor="left" offset="-8" parent="cycle_right" />
+			</anchored>
+		</basicstringc>
 	</template>
 
 </root>
