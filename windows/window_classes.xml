@@ -4,7 +4,6 @@
 	<windowclass name="MAA">
 		<frame>utilitybox</frame>
 		<sizelimits>
-			<!-- Height: 30(frametop) + 288(2xgroupbox) + 24(button) + 24(framebottom) -->
 			<minimum width="400" height="410" />
 			<dynamic />
 		</sizelimits>
@@ -18,24 +17,23 @@
 		<sheetdata>
 			<windowtitlebar_utilitybox name="title" />
 			<windowmenubar_utilitybox name="menubar" />
-
 			<anchor_content_utilitybox_top />
 			<anchor_content_utilitybox_bottom />
-
-			<MAA_groupbox name="MAA_attacker">
+			<MAA_subwindow_actor name="attacker">
 				<class>MAA_attacker</class>
-			</MAA_groupbox>
-			<MAA_groupbox name="MAA_target">
+			</MAA_subwindow_actor>
+			<MAA_subwindow_actor name="target">
 				<class>MAA_target</class>
-			</MAA_groupbox>
-
-			<MAA_button_roll name="MAA_button_roll" />
-
+			</MAA_subwindow_actor>
+			<MAA_button_roll name="attack_roll" />
 			<resize />
 		</sheetdata>
 		<script>
 			function onInit()
-				DB.deleteChildren(getDatabaseNode())
+				MAA.hWnd_onInit(self)
+			end
+			function onClose()
+				MAA.onClose()
 			end
 		</script>
 	</windowclass>
@@ -51,23 +49,24 @@
 			<MAA_groupbox_inner />
 			<MAA_portrait />
 			<MAA_name />
-			<MAA_number_ro name="atk_bonus">
+			<MAA_number_ro name="atk">
 				<anchored>
 					<top parent="inneranchor" anchor="bottom" />
 				</anchored>
 			</MAA_number_ro>
-			<MAA_number_label name="atk_bonus_label">
-				<anchored to="atk_bonus" />
-				<static textres="MAA_atk_bonus_label" />
+			<MAA_number_label>
+				<anchored to="atk" />
+				<static textres="MAA_atk_label" />
+				<showsign />
 			</MAA_number_label>
-			<MAA_number name="qty_attackers">
+			<MAA_number name="qty">
 				<anchored>
-					<top parent="atk_bonus" anchor="bottom" offset="4"/>
+					<top parent="atk" anchor="bottom" offset="4"/>
 				</anchored>
 			</MAA_number>
-			<MAA_number_label name="qty_attackers_label">
-				<anchored to="qty_attackers" />
-				<static textres="MAA_qty_attackers_label" />
+			<MAA_number_label>
+				<anchored to="qty" />
+				<static textres="MAA_qty_label" />
 			</MAA_number_label>
 		</sheetdata>
 	</windowclass>
@@ -83,14 +82,14 @@
 			<MAA_groupbox_inner />
 			<MAA_portrait />
 			<MAA_name />
-			<MAA_number_ro name="target_ac">
+			<MAA_number_ro name="ac">
 				<anchored>
 					<top parent="inneranchor" anchor="bottom" />
 				</anchored>
 			</MAA_number_ro>
-			<MAA_number_label name="target_ac_label">
-				<anchored to="target_ac" />
-				<static textres="MAA_target_ac_label" />
+			<MAA_number_label>
+				<anchored to="ac" />
+				<static textres="MAA_ac_label" />
 			</MAA_number_label>
 		</sheetdata>
 	</windowclass>

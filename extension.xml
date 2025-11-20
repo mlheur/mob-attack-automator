@@ -14,9 +14,9 @@
         <string name="MAA_label_button_roll">Mob Attack!!!</string>
         <string name="MAA_label_attacker">Mobbers</string>
         <string name="MAA_label_target">Victim</string>
-        <string name="MAA_atk_bonus_label">ATK</string>
-        <string name="MAA_qty_attackers_label">Qty</string>
-        <string name="MAA_target_ac_label">AC</string>
+        <string name="MAA_atk_label">ATK</string>
+        <string name="MAA_qty_label">Qty</string>
+        <string name="MAA_ac_label">AC</string>
 		<icon name="MAA_icon" file="graphics/buttons/button_roll.png" />
         <script name="MAA" file="scripts/MAA.lua" />
 		<includefile source="windows/window_classes.xml" />

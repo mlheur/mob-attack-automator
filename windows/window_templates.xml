@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root>
 
-	<template name="MAA_groupbox">
+	<template name="MAA_subwindow_actor">
 		<subwindow>
 			<activate />
+			<fastinit />
 			<frame name="groupbox" />
 			<anchored height="160">
 				<top parent="contentanchor" relation="relative" />
@@ -16,6 +17,7 @@
 	<template name="MAA_subtitle">
 		<stringcontrol name="subtitle">
 			<activate />
+			<fastinit />
 			<readonly />
 			<nodrag />
 			<center />
@@ -31,10 +33,17 @@
 
 	<template name="MAA_button_refresh">
 		<button_refresh name="refresh">
+			<activate />
+			<fastinit />
 			<anchored to="subtitle" width="20" height="20">
 				<left anchor="right" offset="10" />
 				<top offset="2" />
 			</anchored>
+			<script>
+				function onButtonPress()
+					MAA.hBtn_onRefresh(self,window)
+				end
+			</script>
 		</button_refresh>
 	</template>
 
@@ -52,6 +61,7 @@
 	<template name="MAA_portrait">
 		<tokencontrol name="token">
 			<activate />
+			<fastinit />
 			<empty>token_empty</empty>
 			<anchored width="96" height="96" to="inneranchor">
 				<top />
@@ -64,6 +74,7 @@
 	<template name="MAA_name">
 		<stringcontrol name="name">
 			<activate />
+			<fastinit />
 			<controlline />
 			<font>charsheet_header</font>
 			<anchored to="token" height="48">
@@ -76,6 +87,8 @@
 
 	<template name="MAA_number">
 		<basicnumberc>
+			<activate />
+			<fastinit />
 			<anchored>
 				<right parent="inneranchor" />
 				<size height="20" width="36" />
@@ -85,6 +98,8 @@
 
 	<template name="MAA_number_ro">
 		<basicnumberc>
+			<activate />
+			<fastinit />
 			<readonly />
 			<anchored>
 				<right parent="inneranchor" />
@@ -95,6 +110,8 @@
 
 	<template name="MAA_number_label">
 		<label>
+			<activate />
+			<fastinit />
 			<anchored>
 				<top />
 				<right anchor="left" offset="-12" />
@@ -106,6 +123,8 @@
 
 	<template name="MAA_button_roll">
 		<button_text_sm>
+			<activate />
+			<fastinit />
 			<activate/>
 			<state textres="MAA_label_button_roll" />
 			<font>button-white</font>
@@ -120,6 +139,11 @@
 				<left parent="contentanchor" anchor="left" offset="32" />
 				<right parent="contentanchor" anchor="right" offset="-32" />
 			</anchored>
+			<script>
+				function onButtonPress()
+					MAA.hBtn_onRollAttack(self,window)
+				end
+			</script>
 		</button_text_sm>
 	</template>
 
