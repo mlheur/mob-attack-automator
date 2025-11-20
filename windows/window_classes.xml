@@ -24,17 +24,20 @@
 
 			<MAA_groupbox name="MAA_attacker">
 				<class>MAA_attacker</class>
-				<datasource>.attacker</datasource>
 			</MAA_groupbox>
 			<MAA_groupbox name="MAA_target">
 				<class>MAA_target</class>
-				<datasource>.target</datasource>
 			</MAA_groupbox>
 
 			<MAA_button_roll name="MAA_button_roll" />
 
 			<resize />
 		</sheetdata>
+		<script>
+			function onInit()
+				DB.deleteChildren(getDatabaseNode())
+			end
+		</script>
 	</windowclass>
 
 	<windowclass name="MAA_attacker">
@@ -48,18 +51,18 @@
 			<MAA_groupbox_inner />
 			<MAA_portrait />
 			<MAA_name />
-			<MAA_number name="atk_bonus">
+			<MAA_number_ro name="atk_bonus">
 				<datasource>.atk_bonus</datasource>
 				<anchored>
 					<top parent="inneranchor" anchor="bottom" />
 				</anchored>
-			</MAA_number>
+			</MAA_number_ro>
 			<MAA_number_label name="atk_bonus_label">
 				<anchored to="atk_bonus" />
 				<static textres="MAA_atk_bonus_label" />
 			</MAA_number_label>
 			<MAA_number name="qty_attackers">
-				<datasource>.qty_attackers</datasource>
+				<datasource>.qty</datasource>
 				<anchored>
 					<top parent="atk_bonus" anchor="bottom" offset="4"/>
 				</anchored>
@@ -82,12 +85,12 @@
 			<MAA_groupbox_inner />
 			<MAA_portrait />
 			<MAA_name />
-			<MAA_number name="target_ac">
+			<MAA_number_ro name="target_ac">
 				<datasource>.target_ac</datasource>
 				<anchored>
 					<top parent="inneranchor" anchor="bottom" />
 				</anchored>
-			</MAA_number>
+			</MAA_number_ro>
 			<MAA_number_label name="target_ac_label">
 				<anchored to="target_ac" />
 				<static textres="MAA_target_ac_label" />
