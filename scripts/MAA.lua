@@ -24,39 +24,25 @@ function resetWindowPointers()
 	self.WindowPointers["attacker"]["token"] = nil
 	self.WindowPointers["attacker"]["atk"] = nil
 	self.WindowPointers["attacker"]["qty"] = nil
+	self.WindowPointers["attacker"]["action"] = nil
 	self.WindowPointers["target"] = {}
 	self.WindowPointers["target"]["name"] = nil
 	self.WindowPointers["target"]["token"] = nil
 	self.WindowPointers["target"]["ac"] = nil
-	self.WindowPointers["attack_roll"] = nil
 	MAA.dbg("--MAA:resetWindowPointers(): success")
 end
 
 function addWindowPointers(hWnd)
 	MAA.dbg("++MAA:addWindowPointers()")
-	if hWnd == nil then return end
 	self.resetWindowPointers()
-	local i,hControl
-	for i,hControl in pairs(hWnd.getControls()) do
-		local sCtlName = hControl.getName()
-		local ctlType = type(hControl)
-		MAA.dbg("  MAA:addWindowPointers() sCtlName=["..sCtlName.."] ctlType=["..ctlType.."]")
-		if sCtlName == "attack_roll" then
-			MAA.dbg("  MAA:addWindowPointers(): top level sCtlName=["..sCtlName.."]")
-			self.WindowPointers[sCtlName] = hControl
-		elseif sCtlName == "attacker" or sCtlName == "target" then
-			local hSubControl
-			for i,hSubControl in pairs(hControl.subwindow.getControls()) do
-				local sSubName = hSubControl.getName()
-				local subCtlType = type(hSubControl)
-				MAA.dbg("  MAA:addWindowPointers() sSubName=["..sSubName.."] subCtlType=["..subCtlType.."]")
-				if sSubName == "refresh" or sSubName == "name" or sSubName == "token" or sSubName == "atk" or sSubName == "qty" or sSubName == "ac" then
-					MAA.dbg("  MAA:addWindowPointers(): second level sCtlName=["..sCtlName.."] sSubName=["..sSubName.."]")
-					self.WindowPointers[sCtlName][sSubName] = hSubControl
-				end
-			end
-		end
-	end
+	self.WindowPointers["attacker"]["name"]   = hWnd.attacker.subwindow["name"]
+	self.WindowPointers["attacker"]["token"]  = hWnd.attacker.subwindow["token"]
+	self.WindowPointers["attacker"]["atk"]    = hWnd.attacker.subwindow["atk"]
+	self.WindowPointers["attacker"]["qty"]    = hWnd.attacker.subwindow["qty"]
+	self.WindowPointers["attacker"]["action"] = hWnd.attacker.subwindow["action_cycler"].subwindow["action"]
+	self.WindowPointers["target"]["name"]     = hWnd.target.subwindow["name"]
+	self.WindowPointers["target"]["token"]    = hWnd.target.subwindow["token"]
+	self.WindowPointers["target"]["ac"]       = hWnd.target.subwindow["ac"]
 	MAA.dbg("--MAA:addWindowPointers(): success")
 end
 
@@ -108,6 +94,7 @@ function updateAll()
 	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
 	self.WindowPointers["attacker"]["atk"].setValue(3)
 	self.WindowPointers["attacker"]["qty"].setValue(22)
+	self.WindowPointers["attacker"]["action"].setValue("suckerpunch")
 	self.WindowPointers["target"]["name"].setValue(sTargetName)
 	self.WindowPointers["target"]["ac"].setValue(15)
 	MAA.dbg("--MAA:updateAll(): success")
