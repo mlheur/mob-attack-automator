@@ -52,7 +52,6 @@
 			<MAA_portrait />
 			<MAA_name />
 			<MAA_number_ro name="atk_bonus">
-				<datasource>.atk_bonus</datasource>
 				<anchored>
 					<top parent="inneranchor" anchor="bottom" />
 				</anchored>
@@ -62,7 +61,6 @@
 				<static textres="MAA_atk_bonus_label" />
 			</MAA_number_label>
 			<MAA_number name="qty_attackers">
-				<datasource>.qty</datasource>
 				<anchored>
 					<top parent="atk_bonus" anchor="bottom" offset="4"/>
 				</anchored>
@@ -86,7 +84,6 @@
 			<MAA_portrait />
 			<MAA_name />
 			<MAA_number_ro name="target_ac">
-				<datasource>.target_ac</datasource>
 				<anchored>
 					<top parent="inneranchor" anchor="bottom" />
 				</anchored>

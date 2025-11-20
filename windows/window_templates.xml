@@ -50,7 +50,7 @@
 	</template>
 
 	<template name="MAA_portrait">
-		<tokenfield name="token">
+		<tokencontrol name="token">
 			<activate />
 			<empty>token_empty</empty>
 			<anchored width="96" height="96" to="inneranchor">
@@ -58,11 +58,11 @@
 				<left />
 			</anchored>
 			<backcolor>FF00FF00</backcolor>
-		</tokenfield>
+		</tokencontrol>
 	</template>
 
 	<template name="MAA_name">
-		<stringfield name="name">
+		<stringcontrol name="name">
 			<activate />
 			<controlline />
 			<font>charsheet_header</font>
@@ -71,26 +71,26 @@
 				<left anchor="right" offset="4" />
 				<right parent="refresh" offset="2" />
 			</anchored>
-		</stringfield>
+		</stringcontrol>
 	</template>
 
 	<template name="MAA_number">
-		<basicnumber>
+		<basicnumberc>
 			<anchored>
 				<right parent="inneranchor" />
 				<size height="20" width="36" />
 			</anchored>
-		</basicnumber>
+		</basicnumberc>
 	</template>
 
 	<template name="MAA_number_ro">
-		<basicnumber>
+		<basicnumberc>
 			<readonly />
 			<anchored>
 				<right parent="inneranchor" />
 				<size height="20" width="36" />
 			</anchored>
-		</basicnumber>
+		</basicnumberc>
 	</template>
 
 	<template name="MAA_number_label">
