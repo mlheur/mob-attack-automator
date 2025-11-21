@@ -107,6 +107,38 @@ function updateAll()
 	return true
 end
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+local function __getActionIndex(nActionList,sActionName)
+	local i,n,x = 0,0,0
+	for i,n in pairs(nActionList.getChildren()) do
+		x = x + 1
+		if DB.getValue(n,"name") == sActionName then
+			return x
+		end
+	end
+	return x
+end
+local function __getActionValues(nActionList,iActionIndex)
+	local i,n,x = 0,0,0
+	for i,n in pairs(nActionList.getChildren()) do
+		x = x + 1
+		if x == iActionIndex then
+			local sName = DB.getValue(n,"name")
+			local sBonus = __getAttackBonus(DB.getValue(n,"value"))
+			return sName,sBonus
+		end
+	end
+	return "** Unarmed **","-1"
+end
+function __getAttackBonus(sActionValue)
+	local nStart,nEnd = string.find(sActionValue, "ATK: ([-+]?%d)")
+	nStart = nStart + 5
+	return string.sub(sActionValue,nStart,nEnd)
+end
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 function updateAttackAction(iAmt,nActiveCT)
 	if nActiveCT == nil then
 		nActiveCT = CombatManager.getActiveCT()
@@ -114,30 +146,28 @@ function updateAttackAction(iAmt,nActiveCT)
 		local sRecord,sLink = DB.getValue(nActiveCT,"link")
 		if not (sRecord == "npc") then return end
 	end
+
+	local nActionList = nActiveCT.getChild("actions")
+	if nActionList == nil then return end
 	local sOldAction = self.WindowPointers["attacker"]["action"].getValue()
+	local iOldAction = __getActionIndex(nActionList,sOldAction)
+	local iActionLen = nActionList.getChildCount()
+	
 	local sAttackBonus = nil
 	local sActionName  = nil
+
 	if iAmt == 0 then
 		if sOldAction == nil or sOldAction == "" or self.bInvalidateAction then
-			local nActionList = nActiveCT.getChild("actions")
-			if nActionList == nil then return end
-			local i,n = 0
-			for i,n in pairs(nActionList.getChildren()) do
-				local sAttackValue = DB.getValue(n,"value")
-				local nStart,nEnd = string.find(sAttackValue, "ATK: ([-+]?%d)")
-				nStart = nStart + 5
-				sAttackBonus = string.sub(sAttackValue,nStart,nEnd)
-				sActionName  = DB.getValue(n,"name","* Unarmed Strike *")
-				self.bInvalidateAction = false
-				break
-			end
+			sActionName,sAttackBonus = __getActionValues(nActionList,1)
 		end
-	elseif iAmt == -1 then
-		sActionName = "CycleLeft"
-		return
-	elseif iAmt == 1 then
-		sActionName = "CycleRight"
-		return
+	elseif iAmt == -1 or iAmt == 1 then
+		local iNewAction = iOldAction + iAmt
+		if iNewAction == 0 then
+			iNewAction = iActionLen
+		elseif iNewAction > iActionLen then
+			iNewAction = 1
+		end
+		sActionName,sAttackBonus = __getActionValues(nActionList,iNewAction)
 	else
 		return
 	end
