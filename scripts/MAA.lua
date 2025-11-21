@@ -155,11 +155,13 @@ function updateAttackAction(iAmt,nActiveCT)
 	local iActionLen = nActionList.getChildCount()
 	
 	local sAttackBonus = nil
-	local sActionName  = nil
+	local sActionName  = sOldAction
 
 	if iAmt == 0 then
 		if sOldAction == nil or sOldAction == "" or self.bInvalidateAction then
 			sActionName,sAttackBonus = __getActionValues(nActionList,1)
+		else
+			sActionName,sAttackBonus = __getActionValues(nActionList,iActionLen)
 		end
 	elseif iAmt == -1 or iAmt == 1 then
 		local iNewAction = iOldAction + iAmt
