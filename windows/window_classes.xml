@@ -49,12 +49,12 @@
 			<MAA_groupbox_inner />
 			<MAA_portrait />
 			<MAA_name />
-			<MAA_number_ro name="atk">
+			<MAA_number name="atk">
 				<anchored>
 					<top parent="inneranchor" anchor="bottom" />
 				</anchored>
 				<displaysign />
-			</MAA_number_ro>
+			</MAA_number>
 			<MAA_number_label>
 				<anchored to="atk" />
 				<static textres="MAA_atk_label" />
@@ -83,11 +83,11 @@
 			<MAA_groupbox_inner />
 			<MAA_portrait />
 			<MAA_name />
-			<MAA_number_ro name="ac">
+			<MAA_number name="ac">
 				<anchored>
 					<top parent="inneranchor" anchor="bottom" />
 				</anchored>
-			</MAA_number_ro>
+			</MAA_number>
 			<MAA_number_label>
 				<anchored to="ac" />
 				<static textres="MAA_ac_label" />
