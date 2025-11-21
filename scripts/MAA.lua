@@ -102,7 +102,7 @@ function updateAll()
 	self.WindowPointers["attacker"]["qty"].setValue(22)
 	self.WindowPointers["target"]["name"].setValue(sTargetName)
 	self.WindowPointers["target"]["token"].setPrototype(sTargetToken)
-	self.WindowPointers["target"]["ac"].setValue(15)
+	self.WindowPointers["target"]["ac"].setValue(iTargetAC)
 	MAA.dbg("--MAA:updateAll(): success")
 	return true
 end
