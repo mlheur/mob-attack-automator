@@ -93,6 +93,7 @@ function updateAll()
 	local sAttackerToken = DB.getValue(nActiveCT,"token")
 	local sTargetName = DB.getValue(nTarget,"name","sTargetName==nil")
 	local sTargetToken = DB.getValue(nTarget,"token")
+	local iTargetAC = DB.getValue(nTarget,"ac")
 
 	-- All gates passed, update the MAA window.
 	_,self.sLastValidActiveCT = DB.getValue(nActiveCT,"sourcelink")
