@@ -7,6 +7,7 @@ WindowPointers = {}
 
 bInvalidateAction = false
 sLastValidActiveCT = nil
+iLastValidInit = nil
 
 -- getRecordType(nodeCT)
 -- isPlayerCT(v)
@@ -94,7 +95,8 @@ function updateAll()
 	local sTargetToken = DB.getValue(nTarget,"token")
 
 	-- All gates passed, update the MAA window.
-	sLastValidActiveCT = nActiveCT.getPath()
+	_,self.sLastValidActiveCT = DB.getValue(nActiveCT,"sourcelink")
+	self.iLastValidInit = DB.getValue(nActiveCT,"initresult")
 	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
 	self.WindowPointers["attacker"]["token"].setPrototype(sAttackerToken)
 	self.WindowPointers["attacker"]["qty"].setValue(22)
@@ -161,8 +163,12 @@ function onUpdateActiveCT(nU)
 		return
 	end
 
-	if nU.getParent().getPath() == sLastValidActiveCT then
+	nNewActor = nU.getParent()
+	local _,sSourceLink = DB.getValue(nNewActor, "sourcelink")
+	if sSourceLink == self.sLastValidActiveCT and DB.getValue(nNewActor,"initresult") == self.iLastValidInit then
 		MAA.dbg("--MAA:onUpdateActiveCT(): skipping, jumped back to same actor")
+		-- set the name, in case that changed
+		self.WindowPointers["attacker"]["name"].setValue(DB.getValue(nNewActor,"name"))
 		return
 	end
 
