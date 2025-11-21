@@ -115,27 +115,34 @@ function updateAttackAction(iAmt,nActiveCT)
 		if not (sRecord == "npc") then return end
 	end
 	local sOldAction = self.WindowPointers["attacker"]["action"].getValue()
+	local sAttackBonus = nil
+	local sActionName  = nil
 	if iAmt == 0 then
-		if sOldAction == nil or sOldAction == "" or bInvalidateAction then
+		if sOldAction == nil or sOldAction == "" or self.bInvalidateAction then
 			local nActionList = nActiveCT.getChild("actions")
 			if nActionList == nil then return end
 			local i,n = 0
 			for i,n in pairs(nActionList.getChildren()) do
-				self.WindowPointers["attacker"]["action"].setValue(DB.getValue(n,"name","* Unarmed Strike *"))
-				bInvalidateAction = false
+				local sAttackValue = DB.getValue(n,"value")
+				local nStart,nEnd = string.find(sAttackValue, "ATK: ([-+]?%d)")
+				nStart = nStart + 5
+				sAttackBonus = string.sub(sAttackValue,nStart,nEnd)
+				sActionName  = DB.getValue(n,"name","* Unarmed Strike *")
+				self.bInvalidateAction = false
 				break
 			end
 		end
 	elseif iAmt == -1 then
-		self.WindowPointers["attacker"]["action"].setValue("cycle left")
+		sActionName = "CycleLeft"
 		return
 	elseif iAmt == 1 then
-		self.WindowPointers["attacker"]["action"].setValue("cycle right")
+		sActionName = "CycleRight"
 		return
 	else
 		return
 	end
-	self.WindowPointers["attacker"]["atk"].setValue(3)
+	self.WindowPointers["attacker"]["action"].setValue(sActionName)
+	self.WindowPointers["attacker"]["atk"].setValue(sAttackBonus)
 end
 
 --------------------------------------------------------------------------------

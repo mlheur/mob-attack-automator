@@ -53,11 +53,11 @@
 				<anchored>
 					<top parent="inneranchor" anchor="bottom" />
 				</anchored>
+				<displaysign />
 			</MAA_number_ro>
 			<MAA_number_label>
 				<anchored to="atk" />
 				<static textres="MAA_atk_label" />
-				<showsign />
 			</MAA_number_label>
 			<MAA_number name="qty">
 				<anchored>
