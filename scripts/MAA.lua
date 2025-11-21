@@ -5,9 +5,7 @@ WNDDATA  = MODNAME
 
 WindowPointers = {}
 
-bInvalidateAction = false
 sLastValidActiveCT = nil
-iLastValidInit = nil
 
 -- getRecordType(nodeCT)
 -- isPlayerCT(v)
@@ -96,8 +94,7 @@ function updateAll()
 	local iTargetAC = DB.getValue(nTarget,"ac")
 
 	-- All gates passed, update the MAA window.
-	_,self.sLastValidActiveCT = DB.getValue(nActiveCT,"sourcelink")
-	self.iLastValidInit = DB.getValue(nActiveCT,"initresult")
+	self.sLastValidActiveCT = nActiveCT.getPath()
 	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
 	self.WindowPointers["attacker"]["token"].setPrototype(sAttackerToken)
 	self.WindowPointers["attacker"]["qty"].setValue(22)
@@ -105,7 +102,7 @@ function updateAll()
 	self.WindowPointers["target"]["token"].setPrototype(sTargetToken)
 	self.WindowPointers["target"]["ac"].setValue(iTargetAC)
 	MAA.dbg("--MAA:updateAll(): success")
-	return true
+	return
 end
 
 --------------------------------------------------------------------------------
@@ -158,10 +155,10 @@ function updateAttackAction(iAmt,nActiveCT)
 	local sActionName  = sOldAction
 
 	if iAmt == 0 then
-		if sOldAction == nil or sOldAction == "" or self.bInvalidateAction then
+		if sOldAction == nil or sOldAction == "" or iOldAction == nil or iOldAction == 0 or iOldAction > iActionLen then
 			sActionName,sAttackBonus = __getActionValues(nActionList,1)
 		else
-			sActionName,sAttackBonus = __getActionValues(nActionList,iActionLen)
+			sActionName,sAttackBonus = __getActionValues(nActionList,iOldAction)
 		end
 	elseif iAmt == -1 or iAmt == 1 then
 		local iNewAction = iOldAction + iAmt
@@ -204,20 +201,12 @@ function onUpdateActiveCT(nU)
 	end
 
 	nNewActor = nU.getParent()
-	local _,sSourceLink = DB.getValue(nNewActor, "sourcelink")
-	if sSourceLink == self.sLastValidActiveCT and DB.getValue(nNewActor,"initresult") == self.iLastValidInit then
+	if nNewActor.getPath() == self.sLastValidActiveCT then
 		MAA.dbg("--MAA:onUpdateActiveCT(): skipping, jumped back to same actor")
-		-- set the name, in case that changed
-		self.WindowPointers["attacker"]["name"].setValue(DB.getValue(nNewActor,"name"))
 		return
 	end
 
-	self.bInvalidateAction = true
-	MAA.dbg("  MAA:onUpdateActiveCT(): bInvalidateAction invalidated")
-	if not (self.updateAll() == true) then
-		MAA.dbg("  MAA:onUpdateActiveCT(): bInvalidateAction revalidated")
-		self.bInvalidateAction = false
-	end
+	self.updateAll()
 
 	MAA.dbg("--MAA:onUpdateActiveCT(): Executed")
 end
