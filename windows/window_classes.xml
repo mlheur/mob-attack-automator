@@ -103,6 +103,11 @@
 				<anchored>
 					<left />
 				</anchored>
+				<script>
+					function onButtonPress()
+						MAA.updateAttackAction(-1)
+					end
+				</script>
 				<icon normal="arrow_sm_left" />
 			</MAA_button_cycler>
 			<MAA_button_cycler name="cycle_right">
@@ -110,6 +115,11 @@
 					<right />
 				</anchored>
 				<icon normal="arrow_sm_right" />
+				<script>
+					function onButtonPress()
+						MAA.updateAttackAction(1)
+					end
+				</script>
 			</MAA_button_cycler>
 			<MAA_action_value />
 		</sheetdata>

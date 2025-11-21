@@ -6,6 +6,7 @@ WNDDATA  = MODNAME
 WindowPointers = {}
 
 bInvalidateAction = false
+sLastValidActiveCT = nil
 
 -- getRecordType(nodeCT)
 -- isPlayerCT(v)
@@ -93,6 +94,7 @@ function updateAll()
 	local sTargetToken = DB.getValue(nTarget,"token")
 
 	-- All gates passed, update the MAA window.
+	sLastValidActiveCT = nActiveCT.getPath()
 	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
 	self.WindowPointers["attacker"]["token"].setPrototype(sAttackerToken)
 	self.WindowPointers["attacker"]["qty"].setValue(22)
@@ -100,6 +102,7 @@ function updateAll()
 	self.WindowPointers["target"]["token"].setPrototype(sTargetToken)
 	self.WindowPointers["target"]["ac"].setValue(15)
 	MAA.dbg("--MAA:updateAll(): success")
+	return true
 end
 
 function updateAttackAction(iAmt,nActiveCT)
@@ -122,8 +125,10 @@ function updateAttackAction(iAmt,nActiveCT)
 			end
 		end
 	elseif iAmt == -1 then
+		self.WindowPointers["attacker"]["action"].setValue("cycle left")
 		return
 	elseif iAmt == 1 then
+		self.WindowPointers["attacker"]["action"].setValue("cycle right")
 		return
 	else
 		return
@@ -156,8 +161,17 @@ function onUpdateActiveCT(nU)
 		return
 	end
 
+	if nU.getParent().getPath() == sLastValidActiveCT then
+		MAA.dbg("--MAA:onUpdateActiveCT(): skipping, jumped back to same actor")
+		return
+	end
+
 	self.bInvalidateAction = true
-	self.updateAll()
+	MAA.dbg("  MAA:onUpdateActiveCT(): bInvalidateAction invalidated")
+	if not (self.updateAll() == true) then
+		MAA.dbg("  MAA:onUpdateActiveCT(): bInvalidateAction revalidated")
+		self.bInvalidateAction = false
+	end
 
 	MAA.dbg("--MAA:onUpdateActiveCT(): Executed")
 end
