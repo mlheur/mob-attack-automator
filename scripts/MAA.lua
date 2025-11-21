@@ -48,6 +48,37 @@ function addWindowPointers(hWnd)
 	MAA.dbg("--MAA:addWindowPointers(): success")
 end
 
+function countAttackers(nActor,sTargetNoderef)
+	MAA.dbg("++MAA:countAttackers()")
+	local iActorInit = DB.getValue(nActor,"initresult")
+	if iActorInit == nil then
+		MAA.dbg("--MAA:countAttackers(): failure DB.getValue(nActor,'initresult') returned nil")
+		return
+	end
+	local sRecordClass,sSourcelink = DB.getValue(nActor,"sourcelink")
+
+	local i,n,x = 0,0,0
+	for i,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
+		local iThisInit = DB.getValue(n,"initresult")
+		if iThisInit == iActorInit then
+			local sThisClass,sThisSourcelink = DB.getValue(n,"sourcelink")
+			if sThisSourcelink == sSourcelink then
+				local nThisTargetsList = n.getChild("targets")
+				if (not (nThisTargetsList == nil)) then
+					local i2,n2
+					for i2,n2 in pairs(nThisTargetsList.getChildren()) do
+						if DB.getValue(n2,"noderef") == sTargetNoderef then
+							x = x + 1
+						end
+					end
+				end
+			end
+		end
+	end
+	MAA.dbg("--MAA:countAttackers(): success x=["..x.."]")
+	return x
+end
+
 function updateAll()
 	MAA.dbg("++MAA:updateAll()")
 
@@ -85,6 +116,16 @@ function updateAll()
 		return
 	end
 
+	local iMobSize = self.countAttackers(nActiveCT,sTargetNoderef)
+	if iMobSize == nil then
+		MAA.dbg("--MAA:updateAll(): iMobSize is nil")
+		return
+	end
+	if iMobSize < 1 then
+		MAA.dbg("--MAA:updateAll(): iMobSize is less than 1")
+		return
+	end
+
 	self.updateAttackAction(0,nActiveCT)
 
 	local sAttackerName = DB.getValue(nActiveCT,"name","sAttackerName==nil")
@@ -97,7 +138,7 @@ function updateAll()
 	self.sLastValidActiveCT = nActiveCT.getPath()
 	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
 	self.WindowPointers["attacker"]["token"].setPrototype(sAttackerToken)
-	self.WindowPointers["attacker"]["qty"].setValue(22)
+	self.WindowPointers["attacker"]["qty"].setValue(iMobSize)
 	self.WindowPointers["target"]["name"].setValue(sTargetName)
 	self.WindowPointers["target"]["token"].setPrototype(sTargetToken)
 	self.WindowPointers["target"]["ac"].setValue(iTargetAC)
