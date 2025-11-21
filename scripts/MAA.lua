@@ -5,6 +5,8 @@ WNDDATA  = MODNAME
 
 WindowPointers = {}
 
+bInvalidateAction = false
+
 -- getRecordType(nodeCT)
 -- isPlayerCT(v)
 -- resolveNode(v)
@@ -83,21 +85,50 @@ function updateAll()
 		return
 	end
 
-
-
+	self.updateAttackAction(0,nActiveCT)
 
 	local sAttackerName = DB.getValue(nActiveCT,"name","sAttackerName==nil")
+	local sAttackerToken = DB.getValue(nActiveCT,"token")
 	local sTargetName = DB.getValue(nTarget,"name","sTargetName==nil")
-
+	local sTargetToken = DB.getValue(nTarget,"token")
 
 	-- All gates passed, update the MAA window.
 	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
-	self.WindowPointers["attacker"]["atk"].setValue(3)
+	self.WindowPointers["attacker"]["token"].setPrototype(sAttackerToken)
 	self.WindowPointers["attacker"]["qty"].setValue(22)
-	self.WindowPointers["attacker"]["action"].setValue("suckerpunch")
 	self.WindowPointers["target"]["name"].setValue(sTargetName)
+	self.WindowPointers["target"]["token"].setPrototype(sTargetToken)
 	self.WindowPointers["target"]["ac"].setValue(15)
 	MAA.dbg("--MAA:updateAll(): success")
+end
+
+function updateAttackAction(iAmt,nActiveCT)
+	if nActiveCT == nil then
+		nActiveCT = CombatManager.getActiveCT()
+		if nActiveCT == nil then return end
+		local sRecord,sLink = DB.getValue(nActiveCT,"link")
+		if not (sRecord == "npc") then return end
+	end
+	local sOldAction = self.WindowPointers["attacker"]["action"].getValue()
+	if iAmt == 0 then
+		if sOldAction == nil or sOldAction == "" or bInvalidateAction then
+			local nActionList = nActiveCT.getChild("actions")
+			if nActionList == nil then return end
+			local i,n = 0
+			for i,n in pairs(nActionList.getChildren()) do
+				self.WindowPointers["attacker"]["action"].setValue(DB.getValue(n,"name","* Unarmed Strike *"))
+				bInvalidateAction = false
+				break
+			end
+		end
+	elseif iAmt == -1 then
+		return
+	elseif iAmt == 1 then
+		return
+	else
+		return
+	end
+	self.WindowPointers["attacker"]["atk"].setValue(3)
 end
 
 --------------------------------------------------------------------------------
@@ -117,6 +148,7 @@ end
 
 function onUpdateActiveCT(nU)
 	MAA.dbg("++MAA:onUpdateActiveCT()")
+
 	-- prevent excess execution by only firing when _this_ node's active value becomes true
 	local bActive = nU.getValue()
 	if bActive == 0 then
@@ -124,7 +156,9 @@ function onUpdateActiveCT(nU)
 		return
 	end
 
+	self.bInvalidateAction = true
 	self.updateAll()
+
 	MAA.dbg("--MAA:onUpdateActiveCT(): Executed")
 end
 

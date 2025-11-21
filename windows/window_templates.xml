@@ -67,7 +67,6 @@
 				<top />
 				<left />
 			</anchored>
-			<backcolor>FF00FF00</backcolor>
 		</tokencontrol>
 	</template>
 
