@@ -372,11 +372,20 @@ function hBtn_onRollAttack(hCtl,hWnd)
 
 	local nActionList = nActiveCT.getChild("actions")
 	local nodeWeapon = __getActionNode(nActionList,sAction)
-	local rAction = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
+
+	local rActionList = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
+
+	local rAction = {}
+	local k,v
+	for k,v in pairs(rActionList["aAbilities"]) do
+		if v.label == sAction and v.sType == "attack" then
+			rAction = v
+			break
+		end
+	end
 	rAction.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
 
 	local rRoll = ActionAttack.getRoll(nil, rAction);
-	rRoll.bRemoveOnMiss = true
 	rRoll.sType = MODNAME.."_attack"
 
 	self.tResults = {}
@@ -412,6 +421,7 @@ function submitDamageThrow(rSource,rTarget)
 			break
 		end
 	end
+	rAction.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
 
 	__recurseTable("MAA:submitDamageThrow() dump rAction", rAction)
 
