@@ -371,7 +371,35 @@ function handleThrowResult(rSource, rTarget, rRoll)
 
 	self.tResults["pending"] = self.tResults["pending"] - 1
 	if self.tResults["pending"] == 0 then
-		local sChatEntry = "A mob of "..self.tResults["mobsize"].." "..self.tResults["name"].."s attack "..rTarget.sName..".  There are ["..self.tResults["miss"].."] misses, ["..self.tResults["hits"].."] hits, and ["..self.tResults["crit"].."] critical hits."
+
+		local sIsAre = "are"
+		local sMissEs = "misses"
+		local sHitHits = "hits"
+
+		local sConclusion1
+		local sConclusion2
+		local sConclusion3
+		if self.tResults["miss"] == 1 then
+			sConclusion1 = "There is 1 miss,"
+		else
+			sConclusion1 = "There are "..self.tResults["miss"].." misses,"
+		end
+		if self.tResults["hits"] == 1 then
+			sConclusion2 = " 1 regular hit"
+		else
+			sConclusion2 = " "..self.tResults["hits"].." regular hits"
+		end
+		if self.tResults["crit"] == 0 then
+			sConclusion2 = " and"..sConclusion2
+			sConclusion3 = ".  Sadly, none were critical."
+		elseif self.tResults["crit"] == 1 then
+			sConclusion3 = " and 1 critical hit!"
+		else
+			sConclusion3 = " and "..self.tResults["crit"].." critical hits!!!"
+		end
+
+		local sChatEntry = "A mob of "..self.tResults["mobsize"].." "..self.tResults["name"].."s attack "..rTarget.sName.." with their "..self.tResults["action"].."s."
+		sChatEntry = sChatEntry .. "  " .. sConclusion1..sConclusion2..sConclusion3
 		MAA.dbg("  MAA:handleThrowResult() sChatEntry=["..sChatEntry.."]")
 		local msg = {font = "narratorfont", icon = "turn_flag", text = sChatEntry};
 		Comm.deliverChatMessage(msg)
