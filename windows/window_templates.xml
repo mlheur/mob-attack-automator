@@ -122,7 +122,7 @@
 			<pressed offset="1,1" />
 			<frame name="buttonup" offset="2,2,2,2" />
 			<anchored height="24">
-				<top parent="contentanchor" relation="relative" offset="8" />
+				<top parent="contentanchor" relation="relative" offset="4" />
 				<left parent="contentanchor" anchor="left" offset="32" />
 				<right parent="contentanchor" anchor="right" offset="-32" />
 			</anchored>

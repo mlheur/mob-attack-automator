@@ -66,6 +66,7 @@ end
 function resetWindowPointers()
 	MAA.dbg("++MAA:resetWindowPointers()")
 	self.WindowPointers = {}
+	self.WindowPointers["instructions"] = nil
 	self.WindowPointers["attacker"] = {}
 	self.WindowPointers["attacker"]["name"] = nil
 	self.WindowPointers["attacker"]["token"] = nil
@@ -82,6 +83,7 @@ end
 function addWindowPointers(hWnd)
 	MAA.dbg("++MAA:addWindowPointers()")
 	self.resetWindowPointers()
+	self.WindowPointers["instructions"]       = hWnd.instructions
 	self.WindowPointers["attacker"]["name"]   = hWnd.attacker.subwindow["name"]
 	self.WindowPointers["attacker"]["token"]  = hWnd.attacker.subwindow["token"]
 	self.WindowPointers["attacker"]["atk"]    = hWnd.attacker.subwindow["atk"]
@@ -178,14 +180,27 @@ local function __getAllActors()
 	return nActiveCT,nTarget,iMobSize
 end
 
+function zeroAll()
+	self.WindowPointers["attacker"]["name"].setValue("")
+	self.WindowPointers["attacker"]["token"].setPrototype("empty_token")
+	self.WindowPointers["attacker"]["atk"].setValue("")
+	self.WindowPointers["attacker"]["qty"].setValue("")
+	self.WindowPointers["attacker"]["action"].setValue("")
+	self.WindowPointers["target"]["name"].setValue("")
+	self.WindowPointers["target"]["token"].setPrototype("empty_token")
+	self.WindowPointers["target"]["ac"].setValue("")
+end
+
 function updateAll()
 	MAA.dbg("++MAA:updateAll()")
 
 	local nActiveCT,nTarget,iMobSize = __getAllActors()
 	if nActiveCT == nil then
+		self.WindowPointers["instructions"].setVisible(true)
 		MAA.dbg("--MAA:updateAll(): failed to get all actors")
 		return
 	end
+	self.WindowPointers["instructions"].setVisible(false)
 
 	self.updateAttackAction(0,nActiveCT)
 
@@ -295,18 +310,18 @@ end
 --------------------------------------------------------------------------------
 -- Event handlers called from onEvent combat tracker databasenodes.
 --------------------------------------------------------------------------------
-function addHandlersDB(hWnd)
-	MAA.dbg("++MAA:addHandlersDB()")
+function addHandlers(hWnd)
+	MAA.dbg("++MAA:addHandlers()")
 	DB.addHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT )
 	ActionsManager.registerResultHandler(MODNAME.."_attack", self.handleAttackThrowResult)
-	MAA.dbg("--MAA:addHandlersDB(): success")
+	MAA.dbg("--MAA:addHandlers(): success")
 end
 
-function removeHandlersDB()
-	MAA.dbg("++MAA:removeHandlersDB()")
+function removeHandlers()
+	MAA.dbg("++MAA:removeHandlers()")
 	ActionsManager.unregisterResultHandler(MODNAME.."_attack")
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT )
-	MAA.dbg("--MAA:removeHandlersDB(): success")
+	MAA.dbg("--MAA:removeHandlers(): success")
 end
 
 function onUpdateActiveCT(nU)
@@ -335,7 +350,7 @@ end
 --------------------------------------------------------------------------------
 function hWnd_onInit(hWnd)
 	MAA.dbg("++MAA:hWnd_onInit()")
-	self.addHandlersDB()
+	self.addHandlers()
 	self.addWindowPointers(hWnd)
 	self.updateAll()
 	MAA.dbg("--MAA:hWnd_onInit(): success")
@@ -511,8 +526,22 @@ end
 --------------------------------------------------------------------------------
 function onClose()
 	MAA.dbg("++MAA:onClose()")
-	self.removeHandlersDB()
+	self.removeHandlers()
 	self.resetWindowPointers()
 	DB.deleteNode(self.WNDDATA)
 	MAA.dbg("--MAA:onClose(): success")
+end
+
+function getInstructions()
+	local sModName = Interface.getString("MAA_window_title")
+	local sBtnName = Interface.getString("MAA_label_button_roll")
+
+	local sInstructions = "<p>These instructions will dissapear when the conditions are right.</p>"
+	sInstructions = sInstructions .. "<p>The Combat Tracker must have an NPC as the Active combtant.</p>"
+	sInstructions = sInstructions .. "<p>The NPC must be targetting one creature.  "..sModName.." will count the NPCs that share the same base npc record, have the same initiative, and are also targetting the same target.</p>"
+	sInstructions = sInstructions .. "<p>Use the action selector to cycle through the Active NPC's actions.</p>"
+	sInstructions = sInstructions .. "<p>Click the ["..sBtnName.."] button to roll the attacks.  "..sModName.." will roll damage for regular and critical hits.</p>"
+	sInstructions = sInstructions .. "<p>Feature: If you close the window with rolls pending, they will be cancelled/ignored.  This may be fixed in a future release.</p>"
+	sInstructions = sInstructions .. "<p>Feature: Actions that have subsequent effects, e.g. poisonous snake bite 1 piercing damage plus a save with further poison damage, only the original 1 damage will be applied.  This is less likely to be fixed in a future release.</p>"
+	return sInstructions
 end

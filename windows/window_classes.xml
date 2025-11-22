@@ -27,6 +27,14 @@
 			</MAA_subwindow_actor>
 			<MAA_button_roll name="attack_roll" />
 			<resize />
+			<subwindow name="instructions">
+				<anchored to="contentanchor">
+					<top /><left /><right />
+					<bottom parent="bottomanchor" offset="-24" />
+				</anchored>
+				<hidden />
+				<class>MAA_instructions</class>
+			</subwindow>
 		</sheetdata>
 		<script>
 			function onInit()
@@ -122,6 +130,34 @@
 				</script>
 			</MAA_button_cycler>
 			<MAA_action_value />
+		</sheetdata>
+	</windowclass>
+
+	<windowclass name="MAA_instructions">
+		<frame name="groupbox" />
+		<sheetdata>
+			<anchor_content_top />
+			<anchor_content_bottom />
+			<formattedtextcontrol name="text">
+				<font name="narratorfont" />
+				<active />
+				<fastinit />
+				<static />
+				<center />
+				<nodrag />
+				<nodrop />
+				<anchored to="contentanchor">
+					<top offset="24"/>
+					<left offset="24"/>
+					<right offset="-24"/>
+					<bottom parent="bottomanchor" offset="-24" />
+				</anchored>
+				<script>
+					function onInit()
+						setValue(MAA.getInstructions())
+					end
+				</script>
+			</formattedtextcontrol>
 		</sheetdata>
 	</windowclass>
 
