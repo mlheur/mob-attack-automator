@@ -13,6 +13,28 @@ sLastValidActiveCT = nil
 -- resolvePath(v)
 -- getActiveCT
 
+--	[11/21/2025 4:46:08 PM] [MAA] ++MAA:handleThrowResult()
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nAtkEffectsBonus] k=[nAtkEffectsBonus], type(v)=[number], tostring(v)=[0]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[3] newK=[:aDice:1:value] k=[value], type(v)=[number], tostring(v)=[19]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[3] newK=[:aDice:1:type] k=[type], type(v)=[string], tostring(v)=[d20]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[3] newK=[:aDice:1:result] k=[result], type(v)=[number], tostring(v)=[19]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[2] newK=[:aDice:expr] k=[expr], type(v)=[string], tostring(v)=[d20]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[2] newK=[:aDice:total] k=[total], type(v)=[number], tostring(v)=[19]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sResult] k=[sResult], type(v)=[string], tostring(v)=[hit]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nDefEffectsBonus] k=[nDefEffectsBonus], type(v)=[number], tostring(v)=[0]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nTotal] k=[nTotal], type(v)=[number], tostring(v)=[23]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:bSecret] k=[bSecret], type(v)=[boolean], tostring(v)=[false]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sLabel] k=[sLabel], type(v)=[string], tostring(v)=[Mob Attack!!! [Shortbow]]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sDesc] k=[sDesc], type(v)=[string], tostring(v)=[[ATTACK] Mob Attack!!! [Shortbow]]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nDefenseVal] k=[nDefenseVal], type(v)=[number], tostring(v)=[16]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nMod] k=[nMod], type(v)=[number], tostring(v)=[4]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nFirstDie] k=[nFirstDie], type(v)=[number], tostring(v)=[19]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sType] k=[sType], type(v)=[string], tostring(v)=[MAA]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sResults] k=[sResults], type(v)=[string], tostring(v)=[[HIT]]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[2] newK=[:aMessages:1] k=[1], type(v)=[string], tostring(v)=[[HIT]]
+--	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:bRemoveOnMiss] k=[bRemoveOnMiss], type(v)=[boolean], tostring(v)=[true]
+--	[11/21/2025 4:46:08 PM] [MAA] --MAA:handleThrowResult(): Success
+
 --------------------------------------------------------------------------------
 -- internal functions
 --------------------------------------------------------------------------------
@@ -21,8 +43,13 @@ function __recurseTable(sMSG,tTable,sPK,iDepth)
 	iDepth = iDepth or 1
 	sPK = sPK or ""
 	local k,v
-	if type(tTable) ~= "table" then
-		MAA.dbg("  "..sMSG.." k=["..k.."], type(tTable)=["..type(tTable).."], tostring(tTable)=["..tostring(tTable).."]")
+	local tType = type(tTable)
+	if tType ~= "table" then
+		if tType == "databasenode" then
+			MAA.dbg("  "..sMSG.." tTable.getPath()=["..tTable.getPath().."]")
+		else
+			MAA.dbg("  "..sMSG.." type(tTable)=["..tType.."], tostring(tTable)=["..tostring(tTable).."]")
+		end
 		return
 	end
 	for k,v in pairs(tTable) do
@@ -182,6 +209,21 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+local function __getActionNode(nActionList,sActionName)
+	local i,n
+	__recurseTable("__getActionNode() dump nActionList", nActionList)
+	__recurseTable("__getActionNode() dump sActionName", sActionName)
+	for i,n in pairs(nActionList.getChildren()) do
+		__recurseTable("__getActionNode() dump i", i)
+		__recurseTable("__getActionNode() dump n", n)
+		if DB.getValue(n,"name") == sActionName then
+			MAA.dbg("  __getActionNode(): match")
+			return n
+		end
+	end
+	MAA.dbg("  __getActionNode(): miss")
+	return
+end
 local function __getActionIndex(nActionList,sActionName)
 	local i,n,x = 0,0,0
 	for i,n in pairs(nActionList.getChildren()) do
@@ -256,13 +298,13 @@ end
 function addHandlersDB(hWnd)
 	MAA.dbg("++MAA:addHandlersDB()")
 	DB.addHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT )
-	ActionsManager.registerResultHandler(MODNAME, self.handleThrowResult)
+	ActionsManager.registerResultHandler(MODNAME.."_attack", self.handleAttackThrowResult)
 	MAA.dbg("--MAA:addHandlersDB(): success")
 end
 
 function removeHandlersDB()
 	MAA.dbg("++MAA:removeHandlersDB()")
-	ActionsManager.unregisterResultHandler(MODNAME)
+	ActionsManager.unregisterResultHandler(MODNAME.."_attack")
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT )
 	MAA.dbg("--MAA:removeHandlersDB(): success")
 end
@@ -328,19 +370,14 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		sAttackerName = nActiveCT.getChild("name").getValue()
 	end
 
-	local rAction = {};
-	rAction.label = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-	rAction.modifier = self.WindowPointers["attacker"]["atk"].getValue()
+	local nActionList = nActiveCT.getChild("actions")
+	local nodeWeapon = __getActionNode(nActionList,sAction)
+	local rAction = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
+	rAction.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
 
 	local rRoll = ActionAttack.getRoll(nil, rAction);
 	rRoll.bRemoveOnMiss = true
-	rRoll.sType = MODNAME
-
-	local i,sMoberPath
-	for i,sMoberPath in ipairs(self.mobList) do
-		local rAttacker = ActorManager.resolveActor(sMoberPath)
-		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
-	end
+	rRoll.sType = MODNAME.."_attack"
 
 	self.tResults = {}
 	self.tResults["pending"] = iMobSize
@@ -350,12 +387,40 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	self.tResults["crit"] = 0
 	self.tResults["name"] = sAttackerName
 	self.tResults["action"] = sAction
+
+	local i,sMoberPath
+	for i,sMoberPath in ipairs(self.mobList) do
+		local rAttacker = ActorManager.resolveActor(sMoberPath)
+		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
+	end
+
 	MAA.dbg("--MAA:hBtn_onRollAttack(): Success")
 end
---- ...
--- TODO: this is assuming attack rolls.  We will (will we?) run damage rolls too?
----  TODO: enable toggle for bAutoRollDamage.
-function handleThrowResult(rSource, rTarget, rRoll)
+
+function submitDamageThrow(rSource,rTarget)
+	local nSource = CombatManager.getCTFromNode(rSource.sCTNode);
+	local sAction = self.tResults["action"]
+	local nActionList = nSource.getChild("actions")
+	local nodeWeapon = __getActionNode(nActionList,sAction)
+	local rActionList = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
+
+	local rAction = {}
+	local k,v
+	for k,v in pairs(rActionList["aAbilities"]) do
+		if v.label == sAction and v.sType == "damage" then
+			rAction = v
+			break
+		end
+	end
+
+	__recurseTable("MAA:submitDamageThrow() dump rAction", rAction)
+
+	local rRoll = ActionDamage.getRoll(nil, rAction);
+
+	ActionsManager.actionDirect(rSource, "damage", {rRoll}, {{rTarget}})
+end
+
+function handleAttackThrowResult(rSource, rTarget, rRoll)
 	MAA.dbg("++MAA:handleThrowResult()")
 
 	ActionAttack.onAttack(rSource, rTarget, rRoll);
@@ -363,8 +428,10 @@ function handleThrowResult(rSource, rTarget, rRoll)
 
 	if rRoll.sResults == "[CRITICAL HIT]" then
 		self.tResults["crit"] = self.tResults["crit"] + 1
+		self.submitDamageThrow(rSource,rTarget)
 	elseif rRoll.sResults == "[HIT]" then
 		self.tResults["hits"] = self.tResults["hits"] + 1
+		self.submitDamageThrow(rSource,rTarget)
 	else
 		self.tResults["miss"] = self.tResults["miss"] + 1
 	end
