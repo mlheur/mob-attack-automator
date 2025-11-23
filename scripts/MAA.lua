@@ -400,10 +400,6 @@ function hBtn_onRollAttack(hCtl,hWnd)
 			break
 		end
 	end
-	rAction.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-
-	local rRoll = ActionAttack.getRoll(nil, rAction);
-	rRoll.sType = MODNAME.."_attack"
 
 	self.tResults = {}
 	self.tResults["pending"] = iMobSize
@@ -417,30 +413,15 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	local i,sMoberPath
 	for i,sMoberPath in ipairs(self.mobList) do
 		local rAttacker = ActorManager.resolveActor(sMoberPath)
+		local rRoll = ActionAttack.getRoll(nil, rAction)
+		rRoll.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
+		rAction.desc = rRoll.desc
+		ActionAttack.modAttack(rAttacker, rTarget, rRoll)
+		rRoll.sType = MODNAME.."_attack" -- triggers custom callback
 		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
 	end
 
 	MAA.dbg("--MAA:hBtn_onRollAttack(): Success")
-end
-
-function submitDamageThrow(rSource,rTarget)
-	local nSource = CombatManager.getCTFromNode(rSource.sCTNode);
-	local sAction = self.tResults["action"]
-	local nActionList = nSource.getChild("actions")
-	local nodeWeapon = __getActionNode(nActionList,sAction)
-	local rActionList = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
-	local rAction = {}
-	local k,v
-	for k,v in pairs(rActionList["aAbilities"]) do
-		if v.label == sAction and v.sType == "damage" then
-			rAction = v
-			break
-		end
-	end
-	rAction.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-	__recurseTable("MAA:submitDamageThrow() dump rAction", rAction)
-	local rRoll = ActionDamage.getRoll(nil, rAction);
-	ActionsManager.actionDirect(rSource, "damage", {rRoll}, {{rTarget}})
 end
 
 function handleAttackThrowResult(rSource, rTarget, rRoll)
@@ -489,6 +470,27 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 		Comm.deliverChatMessage(msg)
 	end
 	MAA.dbg("--MAA:handleThrowResult(): Success")
+end
+
+function submitDamageThrow(rSource,rTarget)
+	local nSource = CombatManager.getCTFromNode(rSource.sCTNode);
+	local sAction = self.tResults["action"]
+	local nActionList = nSource.getChild("actions")
+	local nodeWeapon = __getActionNode(nActionList,sAction)
+	local rActionList = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
+	local rAction = {}
+	local k,v
+	for k,v in pairs(rActionList["aAbilities"]) do
+		if v.label == sAction and v.sType == "damage" then
+			rAction = v
+			break
+		end
+	end
+	local rRoll = ActionDamage.getRoll(nil, rAction)
+	rRoll.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
+	rAction.desc = rRoll.desc
+	ActionDamage.modDamage(rAttacker, rTarget, rRoll)
+	ActionsManager.actionDirect(rSource, "damage", {rRoll}, {{rTarget}})
 end
 
 --------------------------------------------------------------------------------
