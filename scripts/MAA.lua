@@ -46,7 +46,7 @@ function __recurseTable(sMSG,tTable,sPK,iDepth)
 	local tType = type(tTable)
 	if tType ~= "table" then
 		if tType == "databasenode" then
-			MAA.dbg("  "..sMSG.." tTable.getPath()=["..tTable.getPath().."]")
+			MAA.dbg("  "..sMSG..".getPath()=["..tTable.getPath().."]")
 		else
 			MAA.dbg("  "..sMSG.." type(tTable)=["..tType.."], tostring(tTable)=["..tostring(tTable).."]")
 		end
@@ -61,6 +61,11 @@ function __recurseTable(sMSG,tTable,sPK,iDepth)
 			__recurseTable(sMSG,v,newK,iDepth+1)
 		end
 	end
+end
+
+function showHelp(bVisible)
+	if bVisible == nil then bVisible = true end
+	self.WindowPointers["instructions"].setVisible(bVisible)
 end
 
 function resetWindowPointers()
@@ -103,9 +108,7 @@ function countAttackers(nActor,sTargetNoderef)
 		return
 	end
 	local sRecordClass,sSourcelink = DB.getValue(nActor,"sourcelink")
-
 	self.mobList = {}
-
 	local i,n,x = 0,0,0
 	for i,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
 		local iThisInit = DB.getValue(n,"initresult")
@@ -131,25 +134,21 @@ end
 
 local function __getAllActors()
 	MAA.dbg("++MAA:__getAllActors()")
-
 	local nActiveCT = CombatManager.getActiveCT()
 	if nActiveCT == nil then
 		MAA.dbg("--MAA:__getAllActors(): CombatManager.getActiveCT() returned nil")
 		return
 	end
-
 	local sRecord,sLink = DB.getValue(nActiveCT,"link")
 	if not (sRecord == "npc") then
 		MAA.dbg("--MAA:__getAllActors(): CombatManager.getActiveCT().link.class is not 'npc'")
 		return
 	end
-
 	local nActiveTargetsList = nActiveCT.getChild("targets")
 	if (nActiveTargetsList == nil) or (not (nActiveTargetsList.getChildCount() == 1)) then
 		MAA.dbg("--MAA:__getAllActors(): nActiveTargetsList is nil or nActiveTargetsList.getChildCount() is not 1")
 		return
 	end
-
 	local nTargetNoderef = nil
 	for i,n in pairs(nActiveTargetsList.getChildren()) do
 		nTargetNoderef = n.getChild("noderef")
@@ -158,14 +157,12 @@ local function __getAllActors()
 		MAA.dbg("--MAA:__getAllActors(): nTargetNoderef is nil")
 		return
 	end
-
 	local sTargetNoderef = nTargetNoderef.getValue()
 	local nTarget = DB.findNode(sTargetNoderef)
 	if nTarget == nil then
 		MAA.dbg("--MAA:__getAllActors(): CombatManager resolved the target to nil")
 		return
 	end
-
 	local iMobSize = self.countAttackers(nActiveCT,sTargetNoderef)
 	if iMobSize == nil then
 		MAA.dbg("--MAA:__getAllActors(): iMobSize is nil")
@@ -175,42 +172,25 @@ local function __getAllActors()
 		MAA.dbg("--MAA:__getAllActors(): iMobSize is less than 1")
 		return
 	end
-
 	MAA.dbg("--MAA:__getAllActors(): Success")
 	return nActiveCT,nTarget,iMobSize
 end
 
-function zeroAll()
-	self.WindowPointers["attacker"]["name"].setValue("")
-	self.WindowPointers["attacker"]["token"].setPrototype("empty_token")
-	self.WindowPointers["attacker"]["atk"].setValue("")
-	self.WindowPointers["attacker"]["qty"].setValue("")
-	self.WindowPointers["attacker"]["action"].setValue("")
-	self.WindowPointers["target"]["name"].setValue("")
-	self.WindowPointers["target"]["token"].setPrototype("empty_token")
-	self.WindowPointers["target"]["ac"].setValue("")
-end
-
 function updateAll()
 	MAA.dbg("++MAA:updateAll()")
-
 	local nActiveCT,nTarget,iMobSize = __getAllActors()
 	if nActiveCT == nil then
-		self.WindowPointers["instructions"].setVisible(true)
+		self.showHelp()
 		MAA.dbg("--MAA:updateAll(): failed to get all actors")
 		return
 	end
-	self.WindowPointers["instructions"].setVisible(false)
-
+	self.showHelp(false)
 	self.updateAttackAction(0,nActiveCT)
-
 	local sAttackerName = DB.getValue(nActiveCT,"name","sAttackerName==nil")
 	local sAttackerToken = DB.getValue(nActiveCT,"token")
 	local sTargetName = DB.getValue(nTarget,"name","sTargetName==nil")
 	local sTargetToken = DB.getValue(nTarget,"token")
 	local iTargetAC = DB.getValue(nTarget,"ac")
-
-	-- All gates passed, update the MAA window.
 	self.sLastValidActiveCT = nActiveCT.getPath()
 	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
 	self.WindowPointers["attacker"]["token"].setPrototype(sAttackerToken)
@@ -226,17 +206,11 @@ end
 --------------------------------------------------------------------------------
 local function __getActionNode(nActionList,sActionName)
 	local i,n
-	__recurseTable("__getActionNode() dump nActionList", nActionList)
-	__recurseTable("__getActionNode() dump sActionName", sActionName)
 	for i,n in pairs(nActionList.getChildren()) do
-		__recurseTable("__getActionNode() dump i", i)
-		__recurseTable("__getActionNode() dump n", n)
 		if DB.getValue(n,"name") == sActionName then
-			MAA.dbg("  __getActionNode(): match")
 			return n
 		end
 	end
-	MAA.dbg("  __getActionNode(): miss")
 	return
 end
 local function __getActionIndex(nActionList,sActionName)
@@ -276,16 +250,13 @@ function updateAttackAction(iAmt,nActiveCT)
 		local sRecord,sLink = DB.getValue(nActiveCT,"link")
 		if not (sRecord == "npc") then return end
 	end
-
 	local nActionList = nActiveCT.getChild("actions")
 	if nActionList == nil then return end
 	local sOldAction = self.WindowPointers["attacker"]["action"].getValue()
 	local iOldAction = __getActionIndex(nActionList,sOldAction)
 	local iActionLen = nActionList.getChildCount()
-	
 	local sAttackBonus = nil
 	local sActionName  = sOldAction
-
 	if iAmt == 0 then
 		if sOldAction == nil or sOldAction == "" or iOldAction == nil or iOldAction == 0 or iOldAction > iActionLen then
 			sActionName,sAttackBonus = __getActionValues(nActionList,1)
@@ -312,7 +283,9 @@ end
 --------------------------------------------------------------------------------
 function addHandlers(hWnd)
 	MAA.dbg("++MAA:addHandlers()")
-	DB.addHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT )
+	DB.addHandler(CombatManager.getTrackerPath() .. ".*.targets", "onChildDeleted", onTargetChildDeleted)
+	DB.addHandler(CombatManager.getTrackerPath() .. ".*.targets.*.noderef", "onUpdate", onTargetNoderefUpdated)
+	DB.addHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT)
 	ActionsManager.registerResultHandler(MODNAME.."_attack", self.handleAttackThrowResult)
 	MAA.dbg("--MAA:addHandlers(): success")
 end
@@ -320,28 +293,58 @@ end
 function removeHandlers()
 	MAA.dbg("++MAA:removeHandlers()")
 	ActionsManager.unregisterResultHandler(MODNAME.."_attack")
-	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT )
+	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT)
+	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets.*.noderef", "onUpdate", onTargetNoderefUpdated)
+	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets", "onChildDeleted", onTargetChildDeleted)
 	MAA.dbg("--MAA:removeHandlers(): success")
+end
+
+function onTargetChildDeleted(nP)
+	MAA.dbg("++MAA:function onTargetChildDeleted(nP.getPath=["..nP.getPath().."])")
+	local nAttacker = nP.getParent()
+	if CombatManager.isActive(nAttacker) then
+		if nP.getChildCount() == 1 then
+			self.updateAll()
+		else
+			self.showHelp()
+		end
+	else
+		self.updateAll()
+	end
+	MAA.dbg("--MAA:function onTargetChildDeleted()")
+end
+
+function onTargetNoderefUpdated(nP,sValue)
+	MAA.dbg("++MAA:onTargetNoderefUpdated()")
+	local nTargetsList = nP.getParent().getParent()
+	local nAttacker = nTargetsList.getParent()
+	local iCurrentTargets = nTargetsList.getChildCount()
+	if CombatManager.isActive(nAttacker) then
+		if nTargetsList.getChildCount() == 1 then
+			self.updateAll()
+		else
+			self.showHelp()
+		end
+	else
+		self.updateAll()
+	end
+	MAA.dbg("--MAA:onTargetNoderefUpdated(): Success")
 end
 
 function onUpdateActiveCT(nU)
 	MAA.dbg("++MAA:onUpdateActiveCT()")
-
 	-- prevent excess execution by only firing when _this_ node's active value becomes true
 	local bActive = nU.getValue()
 	if bActive == 0 then
 		MAA.dbg("--MAA:onUpdateActiveCT(): bActive is false, only update on the active CT entry, if any exist.")
 		return
 	end
-
 	nNewActor = nU.getParent()
 	if nNewActor.getPath() == self.sLastValidActiveCT then
 		MAA.dbg("--MAA:onUpdateActiveCT(): skipping, jumped back to same actor")
 		return
 	end
-
 	self.updateAll()
-
 	MAA.dbg("--MAA:onUpdateActiveCT(): Executed")
 end
 
@@ -364,10 +367,9 @@ end
 
 function hBtn_onRollAttack(hCtl,hWnd)
 	MAA.dbg("++MAA:hBtn_onRollAttack()")
-
 	local nActiveCT,nTarget,iMobSize = __getAllActors()
 	if nActiveCT == nil then
-		MAA.dbg("--MAA:updateAll(): failed to get all actors")
+		MAA.dbg("--MAA:hBtn_onRollAttack(): failed to get all actors")
 		return
 	end
 
@@ -427,7 +429,6 @@ function submitDamageThrow(rSource,rTarget)
 	local nActionList = nSource.getChild("actions")
 	local nodeWeapon = __getActionNode(nActionList,sAction)
 	local rActionList = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
-
 	local rAction = {}
 	local k,v
 	for k,v in pairs(rActionList["aAbilities"]) do
@@ -437,20 +438,15 @@ function submitDamageThrow(rSource,rTarget)
 		end
 	end
 	rAction.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-
 	__recurseTable("MAA:submitDamageThrow() dump rAction", rAction)
-
 	local rRoll = ActionDamage.getRoll(nil, rAction);
-
 	ActionsManager.actionDirect(rSource, "damage", {rRoll}, {{rTarget}})
 end
 
 function handleAttackThrowResult(rSource, rTarget, rRoll)
 	MAA.dbg("++MAA:handleThrowResult()")
-
 	ActionAttack.onAttack(rSource, rTarget, rRoll);
 	ActionAttack.setupAttackResolve(rRoll, rSource, rTarget);
-
 	if rRoll.sResults == "[CRITICAL HIT]" then
 		self.tResults["crit"] = self.tResults["crit"] + 1
 		self.submitDamageThrow(rSource,rTarget)
@@ -460,14 +456,11 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 	else
 		self.tResults["miss"] = self.tResults["miss"] + 1
 	end
-
 	self.tResults["pending"] = self.tResults["pending"] - 1
 	if self.tResults["pending"] == 0 then
-
 		local sIsAre = "are"
 		local sMissEs = "misses"
 		local sHitHits = "hits"
-
 		local sConclusion1
 		local sConclusion2
 		local sConclusion3
@@ -489,14 +482,12 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 		else
 			sConclusion3 = " and "..self.tResults["crit"].." critical hits!!!"
 		end
-
 		local sChatEntry = "A mob of "..self.tResults["mobsize"].." "..self.tResults["name"].."s attack "..rTarget.sName.." with their "..self.tResults["action"].."s."
 		sChatEntry = sChatEntry .. "  " .. sConclusion1..sConclusion2..sConclusion3
 		MAA.dbg("  MAA:handleThrowResult() sChatEntry=["..sChatEntry.."]")
 		local msg = {font = "narratorfont", icon = "turn_flag", text = sChatEntry};
 		Comm.deliverChatMessage(msg)
 	end
-
 	MAA.dbg("--MAA:handleThrowResult(): Success")
 end
 
@@ -535,7 +526,6 @@ end
 function getInstructions()
 	local sModName = Interface.getString("MAA_window_title")
 	local sBtnName = Interface.getString("MAA_label_button_roll")
-
 	local sInstructions = "<p>These instructions will dissapear when the conditions are right.</p>"
 	sInstructions = sInstructions .. "<p>The Combat Tracker must have an NPC as the Active combtant.</p>"
 	sInstructions = sInstructions .. "<p>The NPC must be targetting one creature.  "..sModName.." will count the NPCs that share the same base npc record, have the same initiative, and are also targetting the same target.</p>"
