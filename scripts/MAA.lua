@@ -278,21 +278,30 @@ end
 --------------------------------------------------------------------------------
 -- Event handlers called from onEvent combat tracker databasenodes.
 --------------------------------------------------------------------------------
+bHandlerRemovalRequested = false
 function addHandlers(hWnd)
 	MAA.dbg("++MAA:addHandlers()")
 	DB.addHandler(CombatManager.getTrackerPath() .. ".*.targets", "onChildDeleted", onTargetChildDeleted)
 	DB.addHandler(CombatManager.getTrackerPath() .. ".*.targets.*.noderef", "onUpdate", onTargetNoderefUpdated)
 	DB.addHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT)
 	ActionsManager.registerResultHandler(MODNAME.."_attack", self.handleAttackThrowResult)
+	self.bHandlerRemovalRequested = false
 	MAA.dbg("--MAA:addHandlers(): success")
 end
 
-function removeHandlers()
-	MAA.dbg("++MAA:removeHandlers()")
+function _really_removeHandlers()
+	MAA.dbg("++MAA:_really_removeHandlers()")
 	ActionsManager.unregisterResultHandler(MODNAME.."_attack")
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT)
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets.*.noderef", "onUpdate", onTargetNoderefUpdated)
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets", "onChildDeleted", onTargetChildDeleted)
+	self.bHandlerRemovalRequested = false
+	MAA.dbg("--MAA:_really_removeHandlers(): success")
+end
+
+function removeHandlers()
+	MAA.dbg("++MAA:removeHandlers()")
+	self.bHandlerRemovalRequested = true
 	MAA.dbg("--MAA:removeHandlers(): success")
 end
 
@@ -460,6 +469,9 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 		MAA.dbg("  MAA:handleThrowResult() sChatEntry=["..sChatEntry.."]")
 		local msg = {font = "narratorfont", icon = "turn_flag", text = sChatEntry};
 		Comm.deliverChatMessage(msg)
+		if bHandlerRemovalRequested then
+			self._really_removeHandlers()
+		end
 	end
 	MAA.dbg("--MAA:handleThrowResult(): Success")
 end
@@ -525,7 +537,6 @@ function getInstructions()
 	sInstructions = sInstructions .. "<p>The NPC must be targetting one creature.  "..sModName.." will count the NPCs that share the same base npc record, have the same initiative, and are also targetting the same target.</p>"
 	sInstructions = sInstructions .. "<p>Use the action selector to cycle through the Active NPC's actions.</p>"
 	sInstructions = sInstructions .. "<p>Click the ["..sBtnName.."] button to roll the attacks.  "..sModName.." will roll damage for regular and critical hits.</p>"
-	sInstructions = sInstructions .. "<p>Feature: If you close the window with rolls pending, they will be cancelled/ignored.  This may be fixed in a future release.</p>"
-	sInstructions = sInstructions .. "<p>Feature: Actions that have subsequent effects, e.g. poisonous snake bite 1 piercing damage plus a save with further poison damage, only the original 1 damage will be applied.  This is less likely to be fixed in a future release.</p>"
+	sInstructions = sInstructions .. "<p>Feature: Actions that have subsequent effects, e.g. poisonous snake bite 1 piercing damage plus a save with further poison damage, only the original 1 damage will be applied.</p>"
 	return sInstructions
 end
