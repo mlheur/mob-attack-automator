@@ -1,4 +1,5 @@
 DEBUG = true
+
 MODNAME  = "MAA"
 WNDCLASS = MODNAME
 WNDDATA  = MODNAME
@@ -6,8 +7,28 @@ WNDDATA  = MODNAME
 WindowPointers = {}
 
 --------------------------------------------------------------------------------
+
+function getInstructions()
+	local sModName = Interface.getString("MAA_window_title")
+	local sBtnName = Interface.getString("MAA_label_button_roll")
+	local sInstructions = "<p>These instructions will dissapear when the conditions are right.</p>"
+	sInstructions = sInstructions .. "<p>The Combat Tracker must have an NPC as the Active combtant.</p>"
+	sInstructions = sInstructions .. "<p>The NPC must be targetting one creature.  "..sModName.." will count the NPCs that share the same base npc record, have the same initiative, and are also targetting the same target.</p>"
+	sInstructions = sInstructions .. "<p>Use the action selector to cycle through the Active NPC's actions.</p>"
+	sInstructions = sInstructions .. "<p>Click the ["..sBtnName.."] button to roll the attacks.  "..sModName.." will roll damage for regular and critical hits.</p>"
+	sInstructions = sInstructions .. "<p>Feature: Actions that have subsequent effects, e.g. poisonous snake bite 1 piercing damage plus a save with further poison damage, only the original 1 damage will be applied.</p>"
+	return sInstructions
+end
+
+function showHelp(bVisible)
+	if bVisible == nil then bVisible = true end
+	self.WindowPointers["instructions"].setVisible(bVisible)
+	if bVisible then resetTokenWidgets() end
+end
+
+--------------------------------------------------------------------------------
 -- host --> client messaging
---  Handler set up in MAA.onInit()
+--  Client handler set up in MAA.onInit()
 --------------------------------------------------------------------------------
 OOBMSG_TokenWidgetManager = "OOBMSG_"..MODNAME.."_TokenWidgetManager"
 
@@ -15,11 +36,9 @@ function onReceiveOOBMessage(msgOOB)
 	if (not User.isHost()) and msgOOB and msgOOB.type and msgOOB.type == OOBMSG_TokenWidgetManager and msgOOB.instr then
 		MAA.dbg("--MAA:onReceiveOOBMessage() msgOOB.instr=["..msgOOB.instr.."]")
 		if msgOOB.instr == "resetTokenWidgets" then
-			__recurseTable("onReceiveOOBMessage() msgOOB",msgOOB)
 			self.resetTokenWidgets()
 		elseif msgOOB.instr == "setActiveWidget" and msgOOB.sActor and msgOOB.sVisible then
 			local tokenCT = CombatManager.getTokenFromCT(DB.findNode(msgOOB.sActor))
-			__recurseTable("onReceiveOOBMessage() bVisible=["..msgOOB.sVisible.."] tokenCT",tokenCT)
 			local bVisible = msgOOB.sVisible=="true"
 			TokenManager.setActiveWidget(tokenCT,nil,bVisible)
 		else
@@ -33,61 +52,28 @@ function onReceiveOOBMessage(msgOOB)
 end
 
 function notifyClient(instr,sActor,bVisible)
-	if User.isHost() then
-		MAA.dbg("+-MAA:notifyClient(instr=["..instr.."], sActor=["..tostring(sActor).."], bVisible=["..tostring(bVisible).."])")
-		msgOOB = {}
-		msgOOB.type = OOBMSG_TokenWidgetManager
-		msgOOB.instr = instr
-		if bVisible ~= nil then
-			msgOOB.sVisible = tostring(bVisible)
-			msgOOB.sActor = sActor
-		end
-		__recurseTable("notifyClient() msgOOB",msgOOB)
-		Comm.deliverOOBMessage(msgOOB)
+	MAA.dbg("+-MAA:notifyClient(instr=["..instr.."], sActor=["..tostring(sActor).."], bVisible=["..tostring(bVisible).."])")
+	msgOOB = {}
+	msgOOB.type = OOBMSG_TokenWidgetManager
+	msgOOB.instr = instr
+	if bVisible ~= nil then
+		msgOOB.sVisible = tostring(bVisible)
+		msgOOB.sActor = sActor
 	end
+	Comm.deliverOOBMessage(msgOOB)
 end
 
 --------------------------------------------------------------------------------
--- internal functions
---------------------------------------------------------------------------------
-function dbg(...) if MAA.DEBUG then print("["..MODNAME.."] "..unpack(arg)) end end
-function __recurseTable(sMSG,tTable,sPK,iDepth)
-	iDepth = iDepth or 1
-	sPK = sPK or ""
-	local k,v
-	local tType = type(tTable)
-	if tType ~= "table" then
-		if tType == "databasenode" then
-			MAA.dbg("  "..sMSG..".getPath()=["..tTable.getPath().."]")
-		else
-			MAA.dbg("  "..sMSG.." type(tTable)=["..tType.."], tostring(tTable)=["..tostring(tTable).."]")
-		end
-		return
-	end
-	for k,v in pairs(tTable) do
-		local vtype = type(v)
-		newK = sPK .. ":"..k
-		if vtype ~= "table" then
-			MAA.dbg("  "..sMSG.." iDepth=["..iDepth.."] newK=["..newK.."] k=["..k.."], type(v)=["..type(v).."], tostring(v)=["..tostring(v).."]")
-		else
-			__recurseTable(sMSG,v,newK,iDepth+1)
-		end
-	end
-end
 
 function resetTokenWidgets()
 	local k,n
 	for k,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
 		TokenManager.setActiveWidget(CombatManager.getTokenFromCT(n),nil,CombatManager.isActive(n))
 	end
-	notifyClient("resetTokenWidgets")
+	if User.isHost() then notifyClient("resetTokenWidgets") end
 end
 
-function showHelp(bVisible)
-	if bVisible == nil then bVisible = true end
-	self.WindowPointers["instructions"].setVisible(bVisible)
-	if bVisible then resetTokenWidgets() end
-end
+--------------------------------------------------------------------------------
 
 function resetWindowPointers()
 	MAA.dbg("++MAA:resetWindowPointers()")
@@ -120,6 +106,8 @@ function addWindowPointers(hWnd)
 	self.WindowPointers["target"]["ac"]       = hWnd.target.subwindow["ac"]
 	MAA.dbg("--MAA:addWindowPointers(): success")
 end
+
+--------------------------------------------------------------------------------
 
 function countAttackers(nActor,sTargetNoderef)
 	MAA.dbg("++MAA:countAttackers()")
@@ -158,6 +146,8 @@ function countAttackers(nActor,sTargetNoderef)
 	MAA.dbg("--MAA:countAttackers(): success x=["..x.."]")
 	return x
 end
+
+--------------------------------------------------------------------------------
 
 local function __getAllActors()
 	MAA.dbg("++MAA:__getAllActors()")
@@ -203,6 +193,8 @@ local function __getAllActors()
 	return nActiveCT,nTarget,iMobSize
 end
 
+--------------------------------------------------------------------------------
+
 function updateAll()
 	MAA.dbg("++MAA:updateAll()")
 	local nActiveCT,nTarget,iMobSize = __getAllActors()
@@ -229,7 +221,7 @@ function updateAll()
 end
 
 --------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+
 local function __getActionNode(nActionList,sActionName)
 	local i,n
 	for i,n in pairs(nActionList.getChildren()) do
@@ -266,7 +258,7 @@ function __getAttackBonus(sActionValue)
 	nStart = nStart + 5
 	return string.sub(sActionValue,nStart,nEnd)
 end
---------------------------------------------------------------------------------
+
 --------------------------------------------------------------------------------
 
 function updateAttackAction(iAmt,nActiveCT)
@@ -386,6 +378,7 @@ end
 --------------------------------------------------------------------------------
 -- Event handlers called from onEvent inline scripts on the various controls.
 --------------------------------------------------------------------------------
+
 function hWnd_onInit(hWnd)
 	MAA.dbg("++MAA:hWnd_onInit()")
 	self.addHandlers()
@@ -399,6 +392,8 @@ function hBtn_onRefresh(hCtl,hWnd)
 	self.updateAll()
 	MAA.dbg("--MAA:hBtn_onRefresh(): success")
 end
+
+--------------------------------------------------------------------------------
 
 function hBtn_onRollAttack(hCtl,hWnd)
 	MAA.dbg("++MAA:hBtn_onRollAttack()")
@@ -510,6 +505,8 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 	MAA.dbg("--MAA:handleThrowResult(): Success")
 end
 
+--------------------------------------------------------------------------------
+
 function submitDamageThrow(rSource,rTarget)
 	local nSource = CombatManager.getCTFromNode(rSource.sCTNode);
 	local sAction = self.tResults["action"]
@@ -559,14 +556,31 @@ function onClose()
 	MAA.dbg("--MAA:onClose(): success")
 end
 
-function getInstructions()
-	local sModName = Interface.getString("MAA_window_title")
-	local sBtnName = Interface.getString("MAA_label_button_roll")
-	local sInstructions = "<p>These instructions will dissapear when the conditions are right.</p>"
-	sInstructions = sInstructions .. "<p>The Combat Tracker must have an NPC as the Active combtant.</p>"
-	sInstructions = sInstructions .. "<p>The NPC must be targetting one creature.  "..sModName.." will count the NPCs that share the same base npc record, have the same initiative, and are also targetting the same target.</p>"
-	sInstructions = sInstructions .. "<p>Use the action selector to cycle through the Active NPC's actions.</p>"
-	sInstructions = sInstructions .. "<p>Click the ["..sBtnName.."] button to roll the attacks.  "..sModName.." will roll damage for regular and critical hits.</p>"
-	sInstructions = sInstructions .. "<p>Feature: Actions that have subsequent effects, e.g. poisonous snake bite 1 piercing damage plus a save with further poison damage, only the original 1 damage will be applied.</p>"
-	return sInstructions
+--------------------------------------------------------------------------------
+
+function dbg(...) if MAA.DEBUG then print("["..MODNAME.."] "..unpack(arg)) end end
+function __recurseTable(sMSG,tTable,sPK,iDepth)
+	iDepth = iDepth or 1
+	sPK = sPK or ""
+	local k,v
+	local tType = type(tTable)
+	if tType ~= "table" then
+		if tType == "databasenode" then
+			MAA.dbg("  "..sMSG..".getPath()=["..tTable.getPath().."]")
+		else
+			MAA.dbg("  "..sMSG.." type(tTable)=["..tType.."], tostring(tTable)=["..tostring(tTable).."]")
+		end
+		return
+	end
+	for k,v in pairs(tTable) do
+		local vtype = type(v)
+		newK = sPK .. ":"..k
+		if vtype ~= "table" then
+			MAA.dbg("  "..sMSG.." iDepth=["..iDepth.."] newK=["..newK.."] k=["..k.."], type(v)=["..type(v).."], tostring(v)=["..tostring(v).."]")
+		else
+			__recurseTable(sMSG,v,newK,iDepth+1)
+		end
+	end
 end
+
+--------------------------------------------------------------------------------
