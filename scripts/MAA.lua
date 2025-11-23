@@ -5,8 +5,6 @@ WNDDATA  = MODNAME
 
 WindowPointers = {}
 
-sLastValidActiveCT = nil
-
 -- getRecordType(nodeCT)
 -- isPlayerCT(v)
 -- resolveNode(v)
@@ -191,7 +189,6 @@ function updateAll()
 	local sTargetName = DB.getValue(nTarget,"name","sTargetName==nil")
 	local sTargetToken = DB.getValue(nTarget,"token")
 	local iTargetAC = DB.getValue(nTarget,"ac")
-	self.sLastValidActiveCT = nActiveCT.getPath()
 	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
 	self.WindowPointers["attacker"]["token"].setPrototype(sAttackerToken)
 	self.WindowPointers["attacker"]["qty"].setValue(iMobSize)
@@ -337,11 +334,6 @@ function onUpdateActiveCT(nU)
 	local bActive = nU.getValue()
 	if bActive == 0 then
 		MAA.dbg("--MAA:onUpdateActiveCT(): bActive is false, only update on the active CT entry, if any exist.")
-		return
-	end
-	nNewActor = nU.getParent()
-	if nNewActor.getPath() == self.sLastValidActiveCT then
-		MAA.dbg("--MAA:onUpdateActiveCT(): skipping, jumped back to same actor")
 		return
 	end
 	self.updateAll()
