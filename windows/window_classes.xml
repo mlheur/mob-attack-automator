@@ -15,8 +15,6 @@
 			<nolink />
 		</windowmenu>
 		<sheetdata>
-			<windowtitlebar_utilitybox name="title" />
-			<windowmenubar_utilitybox name="menubar" />
 			<anchor_content_utilitybox_top />
 			<anchor_content_utilitybox_bottom />
 			<MAA_subwindow_actor name="attacker">
@@ -35,6 +33,8 @@
 				<hidden />
 				<class>MAA_instructions</class>
 			</subwindow>
+			<windowtitlebar_utilitybox name="title" />
+			<windowmenubar_utilitybox name="menubar" />
 		</sheetdata>
 		<script>
 			function onInit()

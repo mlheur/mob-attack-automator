@@ -5,33 +5,47 @@ WNDDATA  = MODNAME
 
 WindowPointers = {}
 
--- getRecordType(nodeCT)
--- isPlayerCT(v)
--- resolveNode(v)
--- resolvePath(v)
--- getActiveCT
+--------------------------------------------------------------------------------
+-- host --> client messaging
+--  Handler set up in MAA.onInit()
+--------------------------------------------------------------------------------
+OOBMSG_TokenWidgetManager = "OOBMSG_"..MODNAME.."_TokenWidgetManager"
 
---	[11/21/2025 4:46:08 PM] [MAA] ++MAA:handleThrowResult()
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nAtkEffectsBonus] k=[nAtkEffectsBonus], type(v)=[number], tostring(v)=[0]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[3] newK=[:aDice:1:value] k=[value], type(v)=[number], tostring(v)=[19]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[3] newK=[:aDice:1:type] k=[type], type(v)=[string], tostring(v)=[d20]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[3] newK=[:aDice:1:result] k=[result], type(v)=[number], tostring(v)=[19]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[2] newK=[:aDice:expr] k=[expr], type(v)=[string], tostring(v)=[d20]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[2] newK=[:aDice:total] k=[total], type(v)=[number], tostring(v)=[19]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sResult] k=[sResult], type(v)=[string], tostring(v)=[hit]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nDefEffectsBonus] k=[nDefEffectsBonus], type(v)=[number], tostring(v)=[0]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nTotal] k=[nTotal], type(v)=[number], tostring(v)=[23]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:bSecret] k=[bSecret], type(v)=[boolean], tostring(v)=[false]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sLabel] k=[sLabel], type(v)=[string], tostring(v)=[Mob Attack!!! [Shortbow]]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sDesc] k=[sDesc], type(v)=[string], tostring(v)=[[ATTACK] Mob Attack!!! [Shortbow]]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nDefenseVal] k=[nDefenseVal], type(v)=[number], tostring(v)=[16]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nMod] k=[nMod], type(v)=[number], tostring(v)=[4]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:nFirstDie] k=[nFirstDie], type(v)=[number], tostring(v)=[19]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sType] k=[sType], type(v)=[string], tostring(v)=[MAA]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:sResults] k=[sResults], type(v)=[string], tostring(v)=[[HIT]]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[2] newK=[:aMessages:1] k=[1], type(v)=[string], tostring(v)=[[HIT]]
---	[11/21/2025 4:46:08 PM] [MAA]   MAA:handleThrowResult() iDepth=[1] newK=[:bRemoveOnMiss] k=[bRemoveOnMiss], type(v)=[boolean], tostring(v)=[true]
---	[11/21/2025 4:46:08 PM] [MAA] --MAA:handleThrowResult(): Success
+function onReceiveOOBMessage(msgOOB)
+	if (not User.isHost()) and msgOOB and msgOOB.type and msgOOB.type == OOBMSG_TokenWidgetManager and msgOOB.instr then
+		MAA.dbg("--MAA:onReceiveOOBMessage() msgOOB.instr=["..msgOOB.instr.."]")
+		if msgOOB.instr == "resetTokenWidgets" then
+			__recurseTable("onReceiveOOBMessage() msgOOB",msgOOB)
+			self.resetTokenWidgets()
+		elseif msgOOB.instr == "setActiveWidget" and msgOOB.sActor and msgOOB.sVisible then
+			local tokenCT = CombatManager.getTokenFromCT(DB.findNode(msgOOB.sActor))
+			__recurseTable("onReceiveOOBMessage() bVisible=["..msgOOB.sVisible.."] tokenCT",tokenCT)
+			local bVisible = msgOOB.sVisible=="true"
+			TokenManager.setActiveWidget(tokenCT,nil,bVisible)
+		else
+			MAA.dbg("--MAA:onReceiveOOBMessage(): Unhandled instruction")
+			return
+		end
+		MAA.dbg("--MAA:onReceiveOOBMessage(): Success")
+		return
+	end
+	MAA.dbg("+-MAA:onReceiveOOBMessage(): Failed: not host or msgOOB is missing critical data")
+end
+
+function notifyClient(instr,sActor,bVisible)
+	if User.isHost() then
+		MAA.dbg("+-MAA:notifyClient(instr=["..instr.."], sActor=["..tostring(sActor).."], bVisible=["..tostring(bVisible).."])")
+		msgOOB = {}
+		msgOOB.type = OOBMSG_TokenWidgetManager
+		msgOOB.instr = instr
+		if bVisible ~= nil then
+			msgOOB.sVisible = tostring(bVisible)
+			msgOOB.sActor = sActor
+		end
+		__recurseTable("notifyClient() msgOOB",msgOOB)
+		Comm.deliverOOBMessage(msgOOB)
+	end
+end
 
 --------------------------------------------------------------------------------
 -- internal functions
@@ -61,9 +75,18 @@ function __recurseTable(sMSG,tTable,sPK,iDepth)
 	end
 end
 
+function resetTokenWidgets()
+	local k,n
+	for k,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
+		TokenManager.setActiveWidget(CombatManager.getTokenFromCT(n),nil,CombatManager.isActive(n))
+	end
+	notifyClient("resetTokenWidgets")
+end
+
 function showHelp(bVisible)
 	if bVisible == nil then bVisible = true end
 	self.WindowPointers["instructions"].setVisible(bVisible)
+	if bVisible then resetTokenWidgets() end
 end
 
 function resetWindowPointers()
@@ -108,7 +131,10 @@ function countAttackers(nActor,sTargetNoderef)
 	local sRecordClass,sSourcelink = DB.getValue(nActor,"sourcelink")
 	self.mobList = {}
 	local i,n,x = 0,0,0
+	notifyClient("resetTokenWidgets")
 	for i,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
+		local tokenCT = CombatManager.getTokenFromCT(n)
+		TokenManager.setActiveWidget(tokenCT)
 		local iThisInit = DB.getValue(n,"initresult")
 		if iThisInit == iActorInit then
 			local sThisClass,sThisSourcelink = DB.getValue(n,"sourcelink")
@@ -118,7 +144,10 @@ function countAttackers(nActor,sTargetNoderef)
 					local i2,n2
 					for i2,n2 in pairs(nThisTargetsList.getChildren()) do
 						if DB.getValue(n2,"noderef") == sTargetNoderef then
-							table.insert(self.mobList, n.getPath())
+							local sActor = n.getPath()
+							table.insert(self.mobList, sActor)
+							notifyClient("setActiveWidget",sActor,true)
+							TokenManager.setActiveWidget(tokenCT,nil,true)
 							x = x + 1
 						end
 					end
@@ -296,12 +325,17 @@ function _really_removeHandlers()
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets.*.noderef", "onUpdate", onTargetNoderefUpdated)
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets", "onChildDeleted", onTargetChildDeleted)
 	self.bHandlerRemovalRequested = false
+	resetTokenWidgets()
 	MAA.dbg("--MAA:_really_removeHandlers(): success")
 end
 
 function removeHandlers()
 	MAA.dbg("++MAA:removeHandlers()")
-	self.bHandlerRemovalRequested = true
+	if self.tResults and self.tResults["pending"] > 0 then
+		self.bHandlerRemovalRequested = true
+	else
+		_really_removeHandlers()
+	end
 	MAA.dbg("--MAA:removeHandlers(): success")
 end
 
@@ -501,20 +535,16 @@ end
 -- Main Entry Point for MAA manager
 --------------------------------------------------------------------------------
 function onInit()
-	if not User.isHost() then return end
 	MAA.dbg("++MAA:onInit()")
-	local tButton = {}
-	tButton["tooltipres"] = "MAA_window_title"
-	tButton["path"]       = WNDDATA
-	tButton["class"]      = WNDCLASS
-	tButton["sIcon"]      = "button_action_attack"
-	DesktopManager.registerSidebarToolButton(tButton)
-	-- local hWnd = Interface.openWindow(WNDCLASS, WNDDATA)
-	-- openWindow calls window.onInit(),
-	--   which in turn will call MAA.hWnd_onInit()
-	--     that will call MAA.addWindowPointers()
-	--       that will call MAA.resetWindowPointers()
-	--     and will call MAA.updateAll()
+	OOBManager.registerOOBMsgHandler(self.OOBMSG_TokenWidgetManager, self.onReceiveOOBMessage)
+	if User.isHost() then
+		local tButton = {}
+		tButton["tooltipres"] = "MAA_window_title"
+		tButton["path"]       = WNDDATA
+		tButton["class"]      = WNDCLASS
+		tButton["sIcon"]      = "button_action_attack"
+		DesktopManager.registerSidebarToolButton(tButton)
+	end
 	MAA.dbg("--MAA:onInit(): success")
 end
 
