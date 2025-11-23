@@ -23,36 +23,44 @@ end
 function showHelp(bVisible)
 	if bVisible == nil then bVisible = true end
 	self.WindowPointers["instructions"].setVisible(bVisible)
-	if bVisible then resetTokenWidgets() end
+	if bVisible then sendTokenCommand("resetTokenWidgets") end
 end
 
 --------------------------------------------------------------------------------
--- host --> client messaging
---  Client handler set up in MAA.onInit()
+-- host --> host+clients messaging
 --------------------------------------------------------------------------------
 OOBMSG_TokenWidgetManager = "OOBMSG_"..MODNAME.."_TokenWidgetManager"
 
-function onReceiveOOBMessage(msgOOB)
-	if (not User.isHost()) and msgOOB and msgOOB.type and msgOOB.type == OOBMSG_TokenWidgetManager and msgOOB.instr then
-		MAA.dbg("--MAA:onReceiveOOBMessage() msgOOB.instr=["..msgOOB.instr.."]")
+function initOOB()
+	OOBManager.registerOOBMsgHandler(self.OOBMSG_TokenWidgetManager, self.recvTokenCommand)
+end
+
+function recvTokenCommand(msgOOB)
+	MAA.dbg("++MAA:recvTokenCommand()")
+	if msgOOB and msgOOB.type and msgOOB.type == OOBMSG_TokenWidgetManager and msgOOB.instr then
+		MAA.dbg("  MAA:recvTokenCommand() msgOOB.instr=["..msgOOB.instr.."]")
 		if msgOOB.instr == "resetTokenWidgets" then
-			self.resetTokenWidgets()
+			local k,n
+			for k,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
+				TokenManager.setActiveWidget(CombatManager.getTokenFromCT(n),nil,CombatManager.isActive(n))
+			end
+			MAA.dbg("--MAA:recvTokenCommand(): resetTokenWidgets Success")
+			return
 		elseif msgOOB.instr == "setActiveWidget" and msgOOB.sActor and msgOOB.sVisible then
 			local tokenCT = CombatManager.getTokenFromCT(DB.findNode(msgOOB.sActor))
 			local bVisible = msgOOB.sVisible=="true"
 			TokenManager.setActiveWidget(tokenCT,nil,bVisible)
-		else
-			MAA.dbg("--MAA:onReceiveOOBMessage(): Unhandled instruction")
+			MAA.dbg("--MAA:recvTokenCommand(): setActiveWidget Success")
 			return
 		end
-		MAA.dbg("--MAA:onReceiveOOBMessage(): Success")
-		return
 	end
-	MAA.dbg("+-MAA:onReceiveOOBMessage(): Failed: not host or msgOOB is missing critical data")
+	MAA.dbg("--MAA:recvTokenCommand(): Failed: msgOOB is missing critical data")
 end
 
-function notifyClient(instr,sActor,bVisible)
-	MAA.dbg("+-MAA:notifyClient(instr=["..instr.."], sActor=["..tostring(sActor).."], bVisible=["..tostring(bVisible).."])")
+--------------------------------------------------------------------------------
+
+function sendTokenCommand(instr,sActor,bVisible)
+	MAA.dbg("+-MAA:sendTokenCommand(instr=["..instr.."], sActor=["..tostring(sActor).."], bVisible=["..tostring(bVisible).."])")
 	msgOOB = {}
 	msgOOB.type = OOBMSG_TokenWidgetManager
 	msgOOB.instr = instr
@@ -61,16 +69,6 @@ function notifyClient(instr,sActor,bVisible)
 		msgOOB.sActor = sActor
 	end
 	Comm.deliverOOBMessage(msgOOB)
-end
-
---------------------------------------------------------------------------------
-
-function resetTokenWidgets()
-	local k,n
-	for k,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
-		TokenManager.setActiveWidget(CombatManager.getTokenFromCT(n),nil,CombatManager.isActive(n))
-	end
-	if User.isHost() then notifyClient("resetTokenWidgets") end
 end
 
 --------------------------------------------------------------------------------
@@ -118,12 +116,13 @@ function countAttackers(nActor,sTargetNoderef)
 	end
 	local sRecordClass,sSourcelink = DB.getValue(nActor,"sourcelink")
 	self.mobList = {}
+	local tActiveWidgetTracker = {}
 	local i,n,x = 0,0,0
-	notifyClient("resetTokenWidgets")
-	for i,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
-		local tokenCT = CombatManager.getTokenFromCT(n)
-		TokenManager.setActiveWidget(tokenCT)
+	local tCombatList = DB.getChildren(CombatManager.getTrackerPath())
+	sendTokenCommand("resetTokenWidgets")
+	for i,n in pairs(tCombatList) do
 		local iThisInit = DB.getValue(n,"initresult")
+		tActiveWidgetTracker[i] = false
 		if iThisInit == iActorInit then
 			local sThisClass,sThisSourcelink = DB.getValue(n,"sourcelink")
 			if sThisSourcelink == sSourcelink then
@@ -134,14 +133,18 @@ function countAttackers(nActor,sTargetNoderef)
 						if DB.getValue(n2,"noderef") == sTargetNoderef then
 							local sActor = n.getPath()
 							table.insert(self.mobList, sActor)
-							notifyClient("setActiveWidget",sActor,true)
-							TokenManager.setActiveWidget(tokenCT,nil,true)
+							tActiveWidgetTracker[i] = true
 							x = x + 1
 						end
 					end
 				end
 			end
 		end
+	end
+	for i,n in pairs(tCombatList) do
+		local tokenCT = CombatManager.getTokenFromCT(n)
+		local bVisible = tActiveWidgetTracker[i]
+		sendTokenCommand("setActiveWidget",n.getPath(),bVisible)
 	end
 	MAA.dbg("--MAA:countAttackers(): success x=["..x.."]")
 	return x
@@ -317,7 +320,7 @@ function _really_removeHandlers()
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets.*.noderef", "onUpdate", onTargetNoderefUpdated)
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets", "onChildDeleted", onTargetChildDeleted)
 	self.bHandlerRemovalRequested = false
-	resetTokenWidgets()
+	sendTokenCommand("resetTokenWidgets")
 	MAA.dbg("--MAA:_really_removeHandlers(): success")
 end
 
@@ -402,11 +405,9 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		MAA.dbg("--MAA:hBtn_onRollAttack(): failed to get all actors")
 		return
 	end
-
 	local rSource = ActorManager.resolveActor(nActiveCT.getPath())
 	local rTarget = ActorManager.resolveActor(nTarget.getPath())
 	local sAction = self.WindowPointers["attacker"]["action"].getValue()
-
 	local _,sRecord = DB.getValue(nActiveCT,"sourcelink","","")
 	MAA.dbg("  MAA:hBtn_onRollAttack() sRecord=["..sRecord.."]")
 	nAttackerDefinition = DB.findNode(sRecord)
@@ -416,12 +417,9 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	else
 		sAttackerName = nActiveCT.getChild("name").getValue()
 	end
-
 	local nActionList = nActiveCT.getChild("actions")
 	local nodeWeapon = __getActionNode(nActionList,sAction)
-
 	local rActionList = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
-
 	local rAction = {}
 	local k,v
 	for k,v in pairs(rActionList["aAbilities"]) do
@@ -430,7 +428,6 @@ function hBtn_onRollAttack(hCtl,hWnd)
 			break
 		end
 	end
-
 	self.tResults = {}
 	self.tResults["pending"] = iMobSize
 	self.tResults["mobsize"] = iMobSize
@@ -439,7 +436,6 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	self.tResults["crit"] = 0
 	self.tResults["name"] = sAttackerName
 	self.tResults["action"] = sAction
-
 	local i,sMoberPath
 	for i,sMoberPath in ipairs(self.mobList) do
 		local rAttacker = ActorManager.resolveActor(sMoberPath)
@@ -533,7 +529,7 @@ end
 --------------------------------------------------------------------------------
 function onInit()
 	MAA.dbg("++MAA:onInit()")
-	OOBManager.registerOOBMsgHandler(self.OOBMSG_TokenWidgetManager, self.onReceiveOOBMessage)
+	self.initOOB()
 	if User.isHost() then
 		local tButton = {}
 		tButton["tooltipres"] = "MAA_window_title"
