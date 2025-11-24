@@ -357,7 +357,6 @@ end
 
 function removeHandlers()
 	MAA.dbg("++MAA:removeHandlers()")
-	MAA.dbg("  MAA:removeHandlers() pending_damages=["..tostring(self.tResults["pending_damages"]).."]  < before checking if any pending anything are outstanding")
 	if self.tResults["pending_attacks"] > 0 or self.tResults["pending_damages"] > 0 then
 		self.bHandlerRemovalRequested = true
 	else
@@ -519,7 +518,6 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 	else
 		self.tResults["miss"] = self.tResults["miss"] + 1
 		self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
-		MAA.dbg("  MAA:handleAttackThrowResult() pending_damages=["..self.tResults["pending_damages"].."]  < counting as a miss")
 	end
 	self.tResults["pending_attacks"] = self.tResults["pending_attacks"] - 1
 	self.printResultsWhenAble()
@@ -622,7 +620,6 @@ function buildDamageMessage()
 end
 
 function printResultsWhenAble()
-	MAA.dbg("  MAA:printResultsWhenAble() pending_damages=["..self.tResults["pending_damages"].."]  < before checking if any pending anything are outstanding")
 	if self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
 		Comm.deliverChatMessage(self.buildAttackMessage())
 		Comm.deliverChatMessage(self.buildDamageMessage())
