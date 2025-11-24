@@ -50,8 +50,10 @@ function recvTokenCommand(msgOOB)
 			return
 		elseif msgOOB.instr == "setActiveWidget" and msgOOB.sActor and msgOOB.sVisible then
 			local tokenCT = CombatManager.getTokenFromCT(DB.findNode(msgOOB.sActor))
-			local bVisible = msgOOB.sVisible=="true"
-			TokenManager.setActiveWidget(tokenCT,nil,bVisible)
+			if tokenCT then
+				local bVisible = msgOOB.sVisible=="true"
+				TokenManager.setActiveWidget(tokenCT,nil,bVisible)
+			end
 			MAA.dbg("--MAA:recvTokenCommand(): setActiveWidget Success")
 			return
 		end
