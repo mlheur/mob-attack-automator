@@ -569,7 +569,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function dbg(...) if MAA.DEBUG then print("["..MODNAME.."] "..unpack(arg)) end end
+function dbg(...) if Session.IsHost and MAA.DEBUG then print("["..MODNAME.."] "..unpack(arg)) end end
 function __recurseTable(sMSG,tTable,sPK,iDepth)
 	iDepth = iDepth or 1
 	sPK = sPK or ""
