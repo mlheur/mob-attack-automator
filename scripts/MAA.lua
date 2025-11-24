@@ -35,6 +35,8 @@ function initOOB()
 	OOBManager.registerOOBMsgHandler(self.OOBMSG_TokenWidgetManager, self.recvTokenCommand)
 end
 
+--------------------------------------------------------------------------------
+
 function recvTokenCommand(msgOOB)
 	MAA.dbg("++MAA:recvTokenCommand()")
 	if msgOOB and msgOOB.type and msgOOB.type == OOBMSG_TokenWidgetManager and msgOOB.instr then
@@ -56,8 +58,6 @@ function recvTokenCommand(msgOOB)
 	end
 	MAA.dbg("--MAA:recvTokenCommand(): Failed: msgOOB is missing critical data")
 end
-
---------------------------------------------------------------------------------
 
 function sendTokenCommand(instr,sActor,bVisible)
 	MAA.dbg("+-MAA:sendTokenCommand(instr=["..instr.."], sActor=["..tostring(sActor).."], bVisible=["..tostring(bVisible).."])")
@@ -428,6 +428,12 @@ function hBtn_onRollAttack(hCtl,hWnd)
 			break
 		end
 	end
+
+	local tSkipTurnEffect = {}
+	tSkipTurnEffect.sName = Interface.getString("MAA_label_button_roll").."; SKIPTURN"
+	tSkipTurnEffect.nDuration = 1
+	tSkipTurnEffect.nGMOnly = 0
+
 	self.tResults = {}
 	self.tResults["pending"] = iMobSize
 	self.tResults["mobsize"] = iMobSize
@@ -445,6 +451,7 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		ActionAttack.modAttack(rAttacker, rTarget, rRoll)
 		rRoll.sType = MODNAME.."_attack" -- triggers custom callback
 		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
+		EffectManager.addEffect("","",rAttacker.sCTNode,tSkipTurnEffect)
 	end
 
 	MAA.dbg("--MAA:hBtn_onRollAttack(): Success")
@@ -530,7 +537,7 @@ end
 function onInit()
 	MAA.dbg("++MAA:onInit()")
 	self.initOOB()
-	if User.isHost() then
+	if Session.IsHost then
 		local tButton = {}
 		tButton["tooltipres"] = "MAA_window_title"
 		tButton["path"]       = WNDDATA
