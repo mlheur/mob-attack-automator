@@ -460,7 +460,7 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		end
 	end
 
-	tSkipTurnEffect.nInit = DB.getValue(rSource.sCTNode,"initresult",0)
+	tSkipTurnEffect.nInit = nActiveCT.getChild("initresult").getValue() - 1
 
 	self.tResults = {}
 	self.tResults["pending_damages"] = iMobSize
