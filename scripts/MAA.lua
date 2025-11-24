@@ -352,6 +352,7 @@ end
 
 function removeHandlers()
 	MAA.dbg("++MAA:removeHandlers()")
+	MAA.dbg("  MAA:removeHandlers() pending_damages=["..tostring(self.tResults["pending_damages"]).."]  < before checking if any pending anything are outstanding")
 	if self.tResults and ( self.tResults["pending_attacks"] > 0 or self.tResults["pending_damages"] > 0 ) then
 		self.bHandlerRemovalRequested = true
 	else
@@ -463,7 +464,10 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	tSkipTurnEffect.nInit = nActiveCT.getChild("initresult").getValue() - 1
 
 	self.tResults = {}
+	self.tResults["pending_damages"] = self.tResults["pending_damages"] or nil
+	MAA.dbg("  MAA:hBtn_onRollAttack() pending_damages=["..tostring(self.tResults["pending_damages"]).."]  < before setting initial value")
 	self.tResults["pending_damages"] = iMobSize
+	MAA.dbg("  MAA:hBtn_onRollAttack() pending_damages=["..self.tResults["pending_damages"].."]  < initial value")
 	self.tResults["damage"] = 0
 	self.tResults["pending_attacks"] = iMobSize
 	self.tResults["mobsize"] = iMobSize
@@ -472,13 +476,13 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	self.tResults["crit"] = 0
 	self.tResults["name"] = sAttackerName
 	self.tResults["action"] = sAction
+	self.tResults["victim"] = rTarget.sName
 	local i,sMoberPath
 	for i,sMoberPath in ipairs(self.mobList) do
 		local rAttacker = ActorManager.resolveActor(sMoberPath)
 		local rRoll = ActionAttack.getRoll(nil, rAction)
 		rRoll.sType = MODNAME.."_attack" -- triggers custom callback
-		rRoll.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-		rAction.sDesc = rRoll.sDesc
+		rAction.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
 		ActionAttack.modAttack(rAttacker, rTarget, rRoll)
 		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
 		EffectManager.addEffect("","",rAttacker.sCTNode,tSkipTurnEffect)
@@ -502,40 +506,10 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 	else
 		self.tResults["miss"] = self.tResults["miss"] + 1
 		self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
+		MAA.dbg("  MAA:handleAttackThrowResult() pending_damages=["..self.tResults["pending_damages"].."]  < counting as a miss")
 	end
 	self.tResults["pending_attacks"] = self.tResults["pending_attacks"] - 1
-	if self.tResults["pending_attacks"] == 0 then
-		local sIsAre = "are"
-		local sMissEs = "misses"
-		local sHitHits = "hits"
-		local sConclusion1
-		local sConclusion2
-		local sConclusion3
-		if self.tResults["miss"] == 1 then
-			sConclusion1 = "There is 1 miss,"
-		else
-			sConclusion1 = "There are "..self.tResults["miss"].." misses,"
-		end
-		if self.tResults["hits"] == 1 then
-			sConclusion2 = " 1 regular hit"
-		else
-			sConclusion2 = " "..self.tResults["hits"].." regular hits"
-		end
-		if self.tResults["crit"] == 0 then
-			sConclusion2 = " and"..sConclusion2
-			sConclusion3 = ".  Sadly, none were critical."
-		elseif self.tResults["crit"] == 1 then
-			sConclusion3 = " and 1 critical hit!"
-		else
-			sConclusion3 = " and "..self.tResults["crit"].." critical hits!!!"
-		end
-		local sChatEntry = "A mob of "..self.tResults["mobsize"].." "..self.tResults["name"].."s attack "..rTarget.sName.." with their "..self.tResults["action"].."s."
-		sChatEntry = sChatEntry .. "  " .. sConclusion1..sConclusion2..sConclusion3
-		MAA.dbg("  MAA:handleAttackThrowResult() sChatEntry=["..sChatEntry.."]")
-		self.tResults.tAttackSummaryMsg = {font = "narratorfont", icon = "turn_flag", text = sChatEntry};
-		self.printResultsWhenAble()
-		if bHandlerRemovalRequested then self._really_removeHandlers() end
-	end
+	self.printResultsWhenAble()
 	MAA.dbg("--MAA:handleAttackThrowResult(): Success")
 end
 
@@ -559,8 +533,7 @@ function submitDamageThrow(rSource,rTarget)
 	MAA.__recurseTable("submitDamageThrow() generated rRoll",rRoll)
 	ActionDamage.modDamage(rAttacker, rTarget, rRoll)
 	rRoll.sType = MODNAME.."_damage" -- triggers custom callback, for summary messaging
-	rRoll.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-	rAction.sDesc = rRoll.sDesc
+	rAction.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
 	MAA.__recurseTable("submitDamageThrow() submitting rRoll",rRoll)
 	ActionsManager.actionDirect(rSource, "damage", {rRoll}, {{rTarget}})
 end
@@ -572,24 +545,76 @@ function handleDamageThrowResult(rSource,rTarget,rRoll)
 	ActionDamage.onDamage(rSource, rTarget, rRoll);
 	self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
 	self.tResults["damage"] = self.tResults["damage"] + ActionsManager.total(rRoll)
-	if self.tResults["pending_damages"] == 0 then
-		local sChatEntry = "A total of "..self.tResults["damage"].." damage was dealt."
-		self.tResults.tDamageSummaryMsg = {font = "narratorfont", icon = "turn_flag", text = sChatEntry};
-		self.printResultsWhenAble()
-		if bHandlerRemovalRequested then self._really_removeHandlers() end
-	end
+	self.printResultsWhenAble()
 end
 
 --------------------------------------------------------------------------------
 
-function printResultsWhenAble()
-	if self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
-		Comm.deliverChatMessage(self.tResults.tAttackSummaryMsg)
-		if self.tResults.tDamageSummaryMsg then
-			Comm.deliverChatMessage(self.tResults.tDamageSummaryMsg)
+function buildMessage(sText)
+	return({
+		font = "narratorfont",
+		icon = "turn_flag",
+		text = sText
+	})
+end
+
+function buildAttackMessage()
+	local sIsAre = "are"
+	local sMissEs = "misses"
+	local sHitHits = "hits"
+	local sConclusion1
+	local sConclusion2
+	local sConclusion3
+	if self.tResults["miss"] == 1 then
+		sConclusion1 = "There is 1 miss,"
+	else
+		sConclusion1 = "There are "..self.tResults["miss"].." misses,"
+	end
+	if self.tResults["hits"] == 1 then
+		sConclusion2 = " 1 regular hit"
+	else
+		sConclusion2 = " "..self.tResults["hits"].." regular hits"
+	end
+	if self.tResults["crit"] == 0 then
+		sConclusion2 = " and"..sConclusion2
+		sConclusion3 = ".  Sadly, none were critical."
+	elseif self.tResults["crit"] == 1 then
+		sConclusion3 = " and 1 critical hit!"
+	else
+		sConclusion3 = " and "..self.tResults["crit"].." critical hits!!!"
+	end
+	local sChatEntry = "A mob of "..self.tResults["mobsize"].." "..self.tResults["name"].."s attack "..self.tResults["victim"].." with their "..self.tResults["action"].."s."
+	sChatEntry = sChatEntry .. "  " .. sConclusion1..sConclusion2..sConclusion3
+	MAA.dbg("  MAA:buildAttackMessage() sChatEntry=["..sChatEntry.."]")
+	return buildMessage(sChatEntry)
+end
+
+function buildDamageMessage()
+	local sChatEntry = "No damage was dealt."
+	if self.tResults["miss"] == self.tResults["mobsize"] then
+		sChatEntry = "They never stood a chance!"
+	else
+		sChatEntry = "A total of "..self.tResults["damage"].." damage was dealt."
+		if self.tResults["miss"] == 0 then
+			sChatEntry = sChatEntry .. "  It was a brutal attack!"
+		else
+			if self.tResults["crit"] == self.tResults["mobsize"] then
+				sChatEntry = sChatEntry .. "  Their victim has been critically injured!"
+			elseif self.tResults["crit"] > 0 then
+				sChatEntry = sChatEntry .. "  It was a particularily attack!"
+			end
 		end
-		self.tResults.tAttackSummaryMsg = nil
-		self.tResults.tDamageSummaryMsg = nil
+	end
+	return buildMessage(sChatEntry)
+end
+
+function printResultsWhenAble()
+	MAA.dbg("  MAA:printResultsWhenAble() pending_damages=["..self.tResults["pending_damages"].."]  < before checking if any pending anything are outstanding")
+	if self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
+		Comm.deliverChatMessage(self.buildAttackMessage())
+		Comm.deliverChatMessage(self.buildDamageMessage())
+		self.tResults = {}
+		if bHandlerRemovalRequested then self._really_removeHandlers() end
 	end
 end
 
@@ -607,6 +632,7 @@ function onInit()
 		tButton["class"]      = WNDCLASS
 		tButton["sIcon"]      = "button_action_attack"
 		DesktopManager.registerSidebarToolButton(tButton)
+		self.tResults = {}
 	end
 	MAA.dbg("--MAA:onInit(): success")
 end
