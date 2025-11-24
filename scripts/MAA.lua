@@ -492,7 +492,7 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	local i,sMoberPath
 	for i,sMoberPath in ipairs(self.mobList) do
 		local rAttacker = ActorManager.resolveActor(sMoberPath)
-		local rRoll = ActionAttack.getRoll(nil, rAction)
+		local rRoll = ActionAttack.getRoll(rAttacker, rAction)
 		rRoll.sType = MODNAME.."_attack" -- triggers custom callback
 		rAction.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
 		ActionAttack.modAttack(rAttacker, rTarget, rRoll)
@@ -540,7 +540,7 @@ function submitDamageThrow(rSource,rTarget)
 			break
 		end
 	end
-	local rRoll = ActionDamage.getRoll(nil, rAction)
+	local rRoll = ActionDamage.getRoll(rSource, rAction)
 	MAA.__recurseTable("submitDamageThrow() generated rRoll",rRoll)
 	ActionDamage.modDamage(rAttacker, rTarget, rRoll)
 	rRoll.sType = MODNAME.."_damage" -- triggers custom callback, for summary messaging
@@ -552,7 +552,7 @@ end
 function handleDamageThrowResult(rSource,rTarget,rRoll)
 	MAA.__recurseTable("handleDamageThrowResult() rRoll",rRoll)
 	rRoll.sType = "damage"
-	ActionDamage.onDamageRoll(nil,rRoll);
+	ActionDamage.onDamageRoll(rSource,rRoll);
 	ActionDamage.onDamage(rSource, rTarget, rRoll);
 	self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
 	self.tResults["damage"] = self.tResults["damage"] + ActionsManager.total(rRoll)
