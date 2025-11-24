@@ -46,19 +46,24 @@ end
 
 function recvTokenCommand(msgOOB)
 	MAA.dbg("++MAA:recvTokenCommand()")
+	local tokenCT,bVisible
 	if msgOOB and msgOOB.type and msgOOB.type == OOBMSG_TokenWidgetManager and msgOOB.instr then
 		MAA.dbg("  MAA:recvTokenCommand() msgOOB.instr=["..msgOOB.instr.."]")
 		if msgOOB.instr == "resetTokenWidgets" then
 			local k,n
 			for k,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
-				TokenManager.setActiveWidget(CombatManager.getTokenFromCT(n),nil,CombatManager.isActive(n))
+				tokenCT = CombatManager.getTokenFromCT(n)
+				if tokenCT then
+					bVisible = CombatManager.isActive(n)
+					TokenManager.setActiveWidget(tokenCT,nil,bVisible)
+				end
 			end
 			MAA.dbg("--MAA:recvTokenCommand(): resetTokenWidgets Success")
 			return
 		elseif msgOOB.instr == "setActiveWidget" and msgOOB.sActor and msgOOB.sVisible then
-			local tokenCT = CombatManager.getTokenFromCT(DB.findNode(msgOOB.sActor))
+			tokenCT = CombatManager.getTokenFromCT(DB.findNode(msgOOB.sActor))
 			if tokenCT then
-				local bVisible = msgOOB.sVisible=="true"
+				bVisible = (msgOOB.sVisible=="true")
 				TokenManager.setActiveWidget(tokenCT,nil,bVisible)
 			end
 			MAA.dbg("--MAA:recvTokenCommand(): setActiveWidget Success")
@@ -353,7 +358,7 @@ end
 function removeHandlers()
 	MAA.dbg("++MAA:removeHandlers()")
 	MAA.dbg("  MAA:removeHandlers() pending_damages=["..tostring(self.tResults["pending_damages"]).."]  < before checking if any pending anything are outstanding")
-	if self.tResults and ( self.tResults["pending_attacks"] > 0 or self.tResults["pending_damages"] > 0 ) then
+	if self.tResults["pending_attacks"] > 0 or self.tResults["pending_damages"] > 0 then
 		self.bHandlerRemovalRequested = true
 	else
 		_really_removeHandlers()
@@ -423,6 +428,21 @@ function hBtn_onRefresh(hCtl,hWnd)
 	MAA.dbg("--MAA:hBtn_onRefresh(): success")
 end
 
+function initRestults()
+	tResults = {}
+	tResults["pending_damages"] = 0
+	tResults["pending_attacks"] = 0
+	tResults["damage"] = 0
+	tResults["mobsize"] = 0
+	tResults["hits"] = 0
+	tResults["miss"] = 0
+	tResults["crit"] = 0
+	tResults["name"] = "*name*"
+	tResults["action"] = "*action*"
+	tResults["victim"] = "*victim*"
+	return tResults
+end
+
 --------------------------------------------------------------------------------
 
 function hBtn_onRollAttack(hCtl,hWnd)
@@ -463,17 +483,10 @@ function hBtn_onRollAttack(hCtl,hWnd)
 
 	tSkipTurnEffect.nInit = nActiveCT.getChild("initresult").getValue() - 1
 
-	self.tResults = {}
-	self.tResults["pending_damages"] = self.tResults["pending_damages"] or nil
-	MAA.dbg("  MAA:hBtn_onRollAttack() pending_damages=["..tostring(self.tResults["pending_damages"]).."]  < before setting initial value")
+	self.tResults = self.initRestults()
 	self.tResults["pending_damages"] = iMobSize
-	MAA.dbg("  MAA:hBtn_onRollAttack() pending_damages=["..self.tResults["pending_damages"].."]  < initial value")
-	self.tResults["damage"] = 0
 	self.tResults["pending_attacks"] = iMobSize
 	self.tResults["mobsize"] = iMobSize
-	self.tResults["hits"] = 0
-	self.tResults["miss"] = 0
-	self.tResults["crit"] = 0
 	self.tResults["name"] = sAttackerName
 	self.tResults["action"] = sAction
 	self.tResults["victim"] = rTarget.sName
@@ -613,7 +626,7 @@ function printResultsWhenAble()
 	if self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
 		Comm.deliverChatMessage(self.buildAttackMessage())
 		Comm.deliverChatMessage(self.buildDamageMessage())
-		self.tResults = {}
+		self.tResults = initRestults()
 		if bHandlerRemovalRequested then self._really_removeHandlers() end
 	end
 end
@@ -632,7 +645,7 @@ function onInit()
 		tButton["class"]      = WNDCLASS
 		tButton["sIcon"]      = "button_action_attack"
 		DesktopManager.registerSidebarToolButton(tButton)
-		self.tResults = {}
+		self.tResults = initRestults()
 	end
 	MAA.dbg("--MAA:onInit(): success")
 end
