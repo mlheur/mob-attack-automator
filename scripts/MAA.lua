@@ -6,6 +6,12 @@ WNDDATA  = MODNAME
 
 WindowPointers = {}
 
+local tSkipTurnEffect = {
+	sName     = "SKIPTURN",
+	nDuration = 1,
+	nGMOnly   = 0,
+}
+
 --------------------------------------------------------------------------------
 
 function getInstructions()
@@ -408,6 +414,10 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		return
 	end
 	local rSource = ActorManager.resolveActor(nActiveCT.getPath())
+	if EffectManager.hasEffect(rSource,"SKIPTURN") then
+		MAA.dbg("--MAA:hBtn_onRollAttack(): actor has SKIPTURN effect")
+		return
+	end
 	local rTarget = ActorManager.resolveActor(nTarget.getPath())
 	local sAction = self.WindowPointers["attacker"]["action"].getValue()
 	local _,sRecord = DB.getValue(nActiveCT,"sourcelink","","")
@@ -431,11 +441,6 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		end
 	end
 
-	local tSkipTurnEffect = {}
-	tSkipTurnEffect.sName = Interface.getString("MAA_label_button_roll").."; SKIPTURN"
-	tSkipTurnEffect.nDuration = 1
-	tSkipTurnEffect.nGMOnly = 0
-
 	self.tResults = {}
 	self.tResults["pending"] = iMobSize
 	self.tResults["mobsize"] = iMobSize
@@ -455,7 +460,7 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
 		EffectManager.addEffect("","",rAttacker.sCTNode,tSkipTurnEffect)
 	end
-
+	-- Interface.findWindow(WNDCLASS,WNDDATA).close()
 	MAA.dbg("--MAA:hBtn_onRollAttack(): Success")
 end
 
@@ -538,6 +543,7 @@ end
 --------------------------------------------------------------------------------
 function onInit()
 	MAA.dbg("++MAA:onInit()")
+	tSkipTurnEffect.sName = Interface.getString("MAA_label_button_roll").."; SKIPTURN"
 	self.initOOB()
 	if Session.IsHost then
 		local tButton = {}
