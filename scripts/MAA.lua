@@ -10,6 +10,7 @@ local tSkipTurnEffect = {
 	sName     = "SKIPTURN",
 	nDuration = 1,
 	nGMOnly   = 0,
+	nInit     = 0,
 }
 
 --------------------------------------------------------------------------------
@@ -84,17 +85,18 @@ end
 function resetWindowPointers()
 	MAA.dbg("++MAA:resetWindowPointers()")
 	self.WindowPointers = {}
-	self.WindowPointers["instructions"] = nil
-	self.WindowPointers["attacker"] = {}
-	self.WindowPointers["attacker"]["name"] = nil
-	self.WindowPointers["attacker"]["token"] = nil
-	self.WindowPointers["attacker"]["atk"] = nil
-	self.WindowPointers["attacker"]["qty"] = nil
+	self.WindowPointers["instructions"]       = nil
+	self.WindowPointers["button_roll"]        = nil
+	self.WindowPointers["attacker"]           = {}
+	self.WindowPointers["attacker"]["name"]   = nil
+	self.WindowPointers["attacker"]["token"]  = nil
+	self.WindowPointers["attacker"]["atk"]    = nil
+	self.WindowPointers["attacker"]["qty"]    = nil
 	self.WindowPointers["attacker"]["action"] = nil
-	self.WindowPointers["target"] = {}
-	self.WindowPointers["target"]["name"] = nil
-	self.WindowPointers["target"]["token"] = nil
-	self.WindowPointers["target"]["ac"] = nil
+	self.WindowPointers["target"]             = {}
+	self.WindowPointers["target"]["name"]     = nil
+	self.WindowPointers["target"]["token"]    = nil
+	self.WindowPointers["target"]["ac"]       = nil
 	MAA.dbg("--MAA:resetWindowPointers(): success")
 end
 
@@ -102,6 +104,7 @@ function addWindowPointers(hWnd)
 	MAA.dbg("++MAA:addWindowPointers()")
 	self.resetWindowPointers()
 	self.WindowPointers["instructions"]       = hWnd.instructions
+	self.WindowPointers["button_roll"]        = hWnd.attack_roll
 	self.WindowPointers["attacker"]["name"]   = hWnd.attacker.subwindow["name"]
 	self.WindowPointers["attacker"]["token"]  = hWnd.attacker.subwindow["token"]
 	self.WindowPointers["attacker"]["atk"]    = hWnd.attacker.subwindow["atk"]
@@ -115,7 +118,7 @@ end
 
 --------------------------------------------------------------------------------
 
-function countAttackers(nActor,sTargetNoderef)
+function countAttackers(nActor,sTargetNoderef,bUpdate)
 	MAA.dbg("++MAA:countAttackers()")
 	local iActorInit = DB.getValue(nActor,"initresult")
 	if iActorInit == nil then
@@ -127,7 +130,6 @@ function countAttackers(nActor,sTargetNoderef)
 	local tActiveWidgetTracker = {}
 	local i,n,x = 0,0,0
 	local tCombatList = DB.getChildren(CombatManager.getTrackerPath())
-	sendTokenCommand("resetTokenWidgets")
 	for i,n in pairs(tCombatList) do
 		local iThisInit = DB.getValue(n,"initresult")
 		tActiveWidgetTracker[i] = false
@@ -149,10 +151,12 @@ function countAttackers(nActor,sTargetNoderef)
 			end
 		end
 	end
-	for i,n in pairs(tCombatList) do
-		local tokenCT = CombatManager.getTokenFromCT(n)
-		local bVisible = tActiveWidgetTracker[i]
-		sendTokenCommand("setActiveWidget",n.getPath(),bVisible)
+	if bUpdate then
+		for i,n in pairs(tCombatList) do
+			local tokenCT = CombatManager.getTokenFromCT(n)
+			local bVisible = tActiveWidgetTracker[i]
+			sendTokenCommand("setActiveWidget",n.getPath(),bVisible)
+		end
 	end
 	MAA.dbg("--MAA:countAttackers(): success x=["..x.."]")
 	return x
@@ -160,7 +164,7 @@ end
 
 --------------------------------------------------------------------------------
 
-local function __getAllActors()
+local function __getAllActors(bUpdate)
 	MAA.dbg("++MAA:__getAllActors()")
 	local nActiveCT = CombatManager.getActiveCT()
 	if nActiveCT == nil then
@@ -191,7 +195,7 @@ local function __getAllActors()
 		MAA.dbg("--MAA:__getAllActors(): CombatManager resolved the target to nil")
 		return
 	end
-	local iMobSize = self.countAttackers(nActiveCT,sTargetNoderef)
+	local iMobSize = self.countAttackers(nActiveCT,sTargetNoderef,bUpdate)
 	if iMobSize == nil then
 		MAA.dbg("--MAA:__getAllActors(): iMobSize is nil")
 		return
@@ -206,9 +210,20 @@ end
 
 --------------------------------------------------------------------------------
 
+function updateButtonLabel(nActiveCT)
+	if nActiveCT == nil then
+		nActiveCT = CombatManager.getActiveCT()
+	end
+	if nActiveCT and EffectManager.hasEffect(ActorManager.resolveActor(nActiveCT),"SKIPTURN") then
+		self.WindowPointers["button_roll"].setText("call CombatManager.nextActor()")
+	else
+		self.WindowPointers["button_roll"].setText(Interface.getString("MAA_label_button_roll"))
+	end
+end
+
 function updateAll()
 	MAA.dbg("++MAA:updateAll()")
-	local nActiveCT,nTarget,iMobSize = __getAllActors()
+	local nActiveCT,nTarget,iMobSize = __getAllActors(true)
 	if nActiveCT == nil then
 		self.showHelp()
 		MAA.dbg("--MAA:updateAll(): failed to get all actors")
@@ -227,6 +242,7 @@ function updateAll()
 	self.WindowPointers["target"]["name"].setValue(sTargetName)
 	self.WindowPointers["target"]["token"].setPrototype(sTargetToken)
 	self.WindowPointers["target"]["ac"].setValue(iTargetAC)
+	self.updateButtonLabel(nActiveCT)
 	MAA.dbg("--MAA:updateAll(): success")
 	return
 end
@@ -317,12 +333,14 @@ function addHandlers(hWnd)
 	DB.addHandler(CombatManager.getTrackerPath() .. ".*.targets.*.noderef", "onUpdate", onTargetNoderefUpdated)
 	DB.addHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT)
 	ActionsManager.registerResultHandler(MODNAME.."_attack", self.handleAttackThrowResult)
+	ActionsManager.registerResultHandler(MODNAME.."_damage", self.handleDamageThrowResult)
 	self.bHandlerRemovalRequested = false
 	MAA.dbg("--MAA:addHandlers(): success")
 end
 
 function _really_removeHandlers()
 	MAA.dbg("++MAA:_really_removeHandlers()")
+	ActionsManager.unregisterResultHandler(MODNAME.."_damage")
 	ActionsManager.unregisterResultHandler(MODNAME.."_attack")
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT)
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets.*.noderef", "onUpdate", onTargetNoderefUpdated)
@@ -334,7 +352,7 @@ end
 
 function removeHandlers()
 	MAA.dbg("++MAA:removeHandlers()")
-	if self.tResults and self.tResults["pending"] > 0 then
+	if self.tResults and ( self.tResults["pending_attacks"] > 0 or self.tResults["pending_damages"] > 0 ) then
 		self.bHandlerRemovalRequested = true
 	else
 		_really_removeHandlers()
@@ -408,13 +426,14 @@ end
 
 function hBtn_onRollAttack(hCtl,hWnd)
 	MAA.dbg("++MAA:hBtn_onRollAttack()")
-	local nActiveCT,nTarget,iMobSize = __getAllActors()
+	local nActiveCT,nTarget,iMobSize = __getAllActors(false)
 	if nActiveCT == nil then
 		MAA.dbg("--MAA:hBtn_onRollAttack(): failed to get all actors")
 		return
 	end
 	local rSource = ActorManager.resolveActor(nActiveCT.getPath())
 	if EffectManager.hasEffect(rSource,"SKIPTURN") then
+		CombatManager.nextActor()
 		MAA.dbg("--MAA:hBtn_onRollAttack(): actor has SKIPTURN effect")
 		return
 	end
@@ -441,8 +460,12 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		end
 	end
 
+	tSkipTurnEffect.nInit = DB.getValue(rSource.sCTNode,"initresult",0)
+
 	self.tResults = {}
-	self.tResults["pending"] = iMobSize
+	self.tResults["pending_damages"] = iMobSize
+	self.tResults["damage"] = 0
+	self.tResults["pending_attacks"] = iMobSize
 	self.tResults["mobsize"] = iMobSize
 	self.tResults["hits"] = 0
 	self.tResults["miss"] = 0
@@ -453,19 +476,21 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	for i,sMoberPath in ipairs(self.mobList) do
 		local rAttacker = ActorManager.resolveActor(sMoberPath)
 		local rRoll = ActionAttack.getRoll(nil, rAction)
-		rRoll.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-		rAction.desc = rRoll.desc
-		ActionAttack.modAttack(rAttacker, rTarget, rRoll)
 		rRoll.sType = MODNAME.."_attack" -- triggers custom callback
+		rRoll.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
+		rAction.sDesc = rRoll.sDesc
+		ActionAttack.modAttack(rAttacker, rTarget, rRoll)
 		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
 		EffectManager.addEffect("","",rAttacker.sCTNode,tSkipTurnEffect)
 	end
 	-- Interface.findWindow(WNDCLASS,WNDDATA).close()
+	self.updateButtonLabel()
 	MAA.dbg("--MAA:hBtn_onRollAttack(): Success")
 end
 
 function handleAttackThrowResult(rSource, rTarget, rRoll)
-	MAA.dbg("++MAA:handleThrowResult()")
+	MAA.dbg("++MAA:handleAttackThrowResult()")
+	rRoll.sType = "attack"
 	ActionAttack.onAttack(rSource, rTarget, rRoll);
 	ActionAttack.setupAttackResolve(rRoll, rSource, rTarget);
 	if rRoll.sResults == "[CRITICAL HIT]" then
@@ -476,9 +501,10 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 		self.submitDamageThrow(rSource,rTarget)
 	else
 		self.tResults["miss"] = self.tResults["miss"] + 1
+		self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
 	end
-	self.tResults["pending"] = self.tResults["pending"] - 1
-	if self.tResults["pending"] == 0 then
+	self.tResults["pending_attacks"] = self.tResults["pending_attacks"] - 1
+	if self.tResults["pending_attacks"] == 0 then
 		local sIsAre = "are"
 		local sMissEs = "misses"
 		local sHitHits = "hits"
@@ -505,14 +531,12 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 		end
 		local sChatEntry = "A mob of "..self.tResults["mobsize"].." "..self.tResults["name"].."s attack "..rTarget.sName.." with their "..self.tResults["action"].."s."
 		sChatEntry = sChatEntry .. "  " .. sConclusion1..sConclusion2..sConclusion3
-		MAA.dbg("  MAA:handleThrowResult() sChatEntry=["..sChatEntry.."]")
-		local msg = {font = "narratorfont", icon = "turn_flag", text = sChatEntry};
-		Comm.deliverChatMessage(msg)
-		if bHandlerRemovalRequested then
-			self._really_removeHandlers()
-		end
+		MAA.dbg("  MAA:handleAttackThrowResult() sChatEntry=["..sChatEntry.."]")
+		self.tResults.tAttackSummaryMsg = {font = "narratorfont", icon = "turn_flag", text = sChatEntry};
+		self.printResultsWhenAble()
+		if bHandlerRemovalRequested then self._really_removeHandlers() end
 	end
-	MAA.dbg("--MAA:handleThrowResult(): Success")
+	MAA.dbg("--MAA:handleAttackThrowResult(): Success")
 end
 
 --------------------------------------------------------------------------------
@@ -532,10 +556,41 @@ function submitDamageThrow(rSource,rTarget)
 		end
 	end
 	local rRoll = ActionDamage.getRoll(nil, rAction)
-	rRoll.desc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-	rAction.desc = rRoll.desc
+	MAA.__recurseTable("submitDamageThrow() generated rRoll",rRoll)
 	ActionDamage.modDamage(rAttacker, rTarget, rRoll)
+	rRoll.sType = MODNAME.."_damage" -- triggers custom callback, for summary messaging
+	rRoll.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
+	rAction.sDesc = rRoll.sDesc
+	MAA.__recurseTable("submitDamageThrow() submitting rRoll",rRoll)
 	ActionsManager.actionDirect(rSource, "damage", {rRoll}, {{rTarget}})
+end
+
+function handleDamageThrowResult(rSource,rTarget,rRoll)
+	MAA.__recurseTable("handleDamageThrowResult() rRoll",rRoll)
+	rRoll.sType = "damage"
+	ActionDamage.onDamageRoll(nil,rRoll);
+	ActionDamage.onDamage(rSource, rTarget, rRoll);
+	self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
+	self.tResults["damage"] = self.tResults["damage"] + ActionsManager.total(rRoll)
+	if self.tResults["pending_damages"] == 0 then
+		local sChatEntry = "A total of "..self.tResults["damage"].." damage was dealt."
+		self.tResults.tDamageSummaryMsg = {font = "narratorfont", icon = "turn_flag", text = sChatEntry};
+		self.printResultsWhenAble()
+		if bHandlerRemovalRequested then self._really_removeHandlers() end
+	end
+end
+
+--------------------------------------------------------------------------------
+
+function printResultsWhenAble()
+	if self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
+		Comm.deliverChatMessage(self.tResults.tAttackSummaryMsg)
+		if self.tResults.tDamageSummaryMsg then
+			Comm.deliverChatMessage(self.tResults.tDamageSummaryMsg)
+		end
+		self.tResults.tAttackSummaryMsg = nil
+		self.tResults.tDamageSummaryMsg = nil
+	end
 end
 
 --------------------------------------------------------------------------------
