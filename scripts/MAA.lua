@@ -19,7 +19,7 @@ function getInstructions()
 	local sModName = Interface.getString("MAA_window_title")
 	local sBtnName = Interface.getString("MAA_label_button_roll")
 	local sInstructions = "<p>These instructions will dissapear when the conditions are right.</p>"
-	sInstructions = sInstructions .. "<p>The Combat Tracker must have an NPC as the Active combtant.</p>"
+	sInstructions = sInstructions .. "<p>The Combat Tracker must have an NPC as the Active combatant.</p>"
 	sInstructions = sInstructions .. "<p>The NPC must be targetting one creature.  "..sModName.." will count the NPCs that share the same base npc record, have the same initiative, and are also targetting the same target.</p>"
 	sInstructions = sInstructions .. "<p>Use the action selector to cycle through the Active NPC's actions.</p>"
 	sInstructions = sInstructions .. "<p>Click the ["..sBtnName.."] button to roll the attacks.  "..sModName.." will roll damage for regular and critical hits.</p>"
