@@ -118,10 +118,10 @@ end
 --------------------------------------------------------------------------------
 
 function countAttackers(nActor,sTargetNoderef,bUpdate)
-	MAA.dbg("++MAA:countAttackers()")
+	--MAA.dbg("++MAA:countAttackers()")
 	local iActorInit = DB.getValue(nActor,"initresult")
 	if iActorInit == nil then
-		MAA.dbg("--MAA:countAttackers(): failure DB.getValue(nActor,'initresult') returned nil")
+		--MAA.dbg("--MAA:countAttackers(): failure DB.getValue(nActor,'initresult') returned nil")
 		return
 	end
 	local sRecordClass,sSourcelink = DB.getValue(nActor,"sourcelink")
@@ -151,9 +151,9 @@ function countAttackers(nActor,sTargetNoderef,bUpdate)
 				end
 			end
 		end
-		if bUpdate then sendTokenCommand("setActiveWidget",n.getPath(),bHighlight) end
+		if bUpdate then self.sendTokenCommand("setActiveWidget",n.getPath(),bHighlight) end
 	end
-	MAA.dbg("--MAA:countAttackers(): success x=["..x.."]")
+	--MAA.dbg("--MAA:countAttackers(): success x=["..x.."]")
 	return x
 end
 
