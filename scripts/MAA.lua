@@ -47,10 +47,10 @@ end
 --------------------------------------------------------------------------------
 
 function recvTokenCommand(msgOOB)
-	MAA.dbg("++MAA:recvTokenCommand()")
+	--MAA.dbg("++MAA:recvTokenCommand()")
 	local tokenCT,bVisible
 	if msgOOB and msgOOB.type and msgOOB.type == OOBMSG_TokenWidgetManager and msgOOB.instr then
-		MAA.dbg("  MAA:recvTokenCommand() msgOOB.instr=["..msgOOB.instr.."]")
+		--MAA.dbg("  MAA:recvTokenCommand() msgOOB.instr=["..msgOOB.instr.."]")
 		if msgOOB.instr == "resetTokenWidgets" then
 			local k,n
 			for k,n in pairs(DB.getChildren(CombatManager.getTrackerPath())) do
@@ -60,7 +60,7 @@ function recvTokenCommand(msgOOB)
 					TokenManager.setActiveWidget(tokenCT,nil,bVisible)
 				end
 			end
-			MAA.dbg("--MAA:recvTokenCommand(): resetTokenWidgets Success")
+			--MAA.dbg("--MAA:recvTokenCommand(): resetTokenWidgets Success")
 			return
 		elseif msgOOB.instr == "setActiveWidget" and msgOOB.sActor and msgOOB.sVisible then
 			tokenCT = CombatManager.getTokenFromCT(DB.findNode(msgOOB.sActor))
@@ -68,15 +68,15 @@ function recvTokenCommand(msgOOB)
 				bVisible = (msgOOB.sVisible=="true")
 				TokenManager.setActiveWidget(tokenCT,nil,bVisible)
 			end
-			MAA.dbg("--MAA:recvTokenCommand(): setActiveWidget Success")
+			--MAA.dbg("--MAA:recvTokenCommand(): setActiveWidget Success")
 			return
 		end
 	end
-	MAA.dbg("--MAA:recvTokenCommand(): Failed: msgOOB is missing critical data")
+	--MAA.dbg("--MAA:recvTokenCommand(): Failed: msgOOB is missing critical data")
 end
 
 function sendTokenCommand(instr,sActor,bVisible)
-	MAA.dbg("+-MAA:sendTokenCommand(instr=["..instr.."], sActor=["..tostring(sActor).."], bVisible=["..tostring(bVisible).."])")
+	--MAA.dbg("+-MAA:sendTokenCommand(instr=["..instr.."], sActor=["..tostring(sActor).."], bVisible=["..tostring(bVisible).."])")
 	msgOOB = {}
 	msgOOB.type = OOBMSG_TokenWidgetManager
 	msgOOB.instr = instr
@@ -425,6 +425,14 @@ function hWnd_onInit(hWnd)
 	MAA.dbg("--MAA:hWnd_onInit(): success")
 end
 
+function hWnd_onClose()
+	MAA.dbg("++MAA:hWnd_onClose()")
+	self.removeHandlers()
+	MAA.dbg("--MAA:hWnd_onClose(): success")
+end
+
+--------------------------------------------------------------------------------
+
 function hBtn_onRefresh(hCtl,hWnd)
 	MAA.dbg("++MAA:hBtn_onRefresh()")
 	self.updateAll()
@@ -485,11 +493,7 @@ function hBtn_onRollAttack(hCtl,hWnd)
 			break
 		end
 	end
-
 	tSkipTurnEffect.nInit = nActiveCT.getChild("initresult").getValue() - 1
-
-	ModifierManager.lock()
-
 	self.tResults = self.initRestults()
 	self.tResults["pending_damages"] = iMobSize
 	self.tResults["pending_attacks"] = iMobSize
@@ -498,6 +502,7 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	self.tResults["action"] = sAction
 	self.tResults["victim"] = rTarget.sName
 	local i,sMoberPath
+	ModifierManager.lock()
 	for i,sMoberPath in ipairs(self.mobList) do
 		local rAttacker = ActorManager.resolveActor(sMoberPath)
 		local rRoll = ActionAttack.getRoll(rAttacker, rAction)
@@ -653,13 +658,10 @@ function onInit()
 	MAA.dbg("--MAA:onInit(): success")
 end
 
---------------------------------------------------------------------------------
--- MAA manager exit routine, also called by window.onClose()
---------------------------------------------------------------------------------
 function onClose()
 	MAA.dbg("++MAA:onClose()")
-	self.removeHandlers()
-	self.resetWindowPointers()
+	local hWnd = Interface.findWindow(WNDCLASS,WNDDATA)
+	if hWnd then hWnd.close() end
 	DB.deleteNode(self.WNDDATA)
 	MAA.dbg("--MAA:onClose(): success")
 end
@@ -667,6 +669,7 @@ end
 --------------------------------------------------------------------------------
 
 function dbg(...) if Session.IsHost and MAA.DEBUG then print("["..MODNAME.."] "..unpack(arg)) end end
+
 function __recurseTable(sMSG,tTable,sPK,iDepth)
 	iDepth = iDepth or 1
 	sPK = sPK or ""

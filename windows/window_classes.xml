@@ -41,7 +41,7 @@
 				MAA.hWnd_onInit(self)
 			end
 			function onClose()
-				MAA.onClose()
+				MAA.hWnd_onClose()
 			end
 		</script>
 	</windowclass>
