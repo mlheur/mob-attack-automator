@@ -32,6 +32,9 @@ end
 function showHelp(bVisible)
 	if bVisible == nil then bVisible = true end
 	self.WindowPointers["instructions"].setVisible(bVisible)
+	self.WindowPointers["subwindows"]["attacker"].setVisible(not bVisible)
+	self.WindowPointers["subwindows"]["target"].setVisible(not bVisible)
+	self.WindowPointers["button_roll"].setVisible(not bVisible)
 	if bVisible then sendTokenCommand("resetTokenWidgets") end
 end
 
@@ -92,34 +95,39 @@ end
 function resetWindowPointers()
 	MAA.dbg("++MAA:resetWindowPointers()")
 	self.WindowPointers = {}
-	self.WindowPointers["instructions"]       = nil
-	self.WindowPointers["button_roll"]        = nil
-	self.WindowPointers["attacker"]           = {}
-	self.WindowPointers["attacker"]["name"]   = nil
-	self.WindowPointers["attacker"]["token"]  = nil
-	self.WindowPointers["attacker"]["atk"]    = nil
-	self.WindowPointers["attacker"]["qty"]    = nil
-	self.WindowPointers["attacker"]["action"] = nil
-	self.WindowPointers["target"]             = {}
-	self.WindowPointers["target"]["name"]     = nil
-	self.WindowPointers["target"]["token"]    = nil
-	self.WindowPointers["target"]["ac"]       = nil
+	self.WindowPointers["instructions"]           = nil
+	self.WindowPointers["subwindows"]             = {}
+	self.WindowPointers["subwindows"]["attacker"] = nil
+	self.WindowPointers["subwindows"]["target"]   = nil
+	self.WindowPointers["button_roll"]            = nil
+	self.WindowPointers["attacker"]               = {}
+	self.WindowPointers["attacker"]["name"]       = nil
+	self.WindowPointers["attacker"]["token"]      = nil
+	self.WindowPointers["attacker"]["atk"]        = nil
+	self.WindowPointers["attacker"]["qty"]        = nil
+	self.WindowPointers["attacker"]["action"]     = nil
+	self.WindowPointers["target"]                 = {}
+	self.WindowPointers["target"]["name"]         = nil
+	self.WindowPointers["target"]["token"]        = nil
+	self.WindowPointers["target"]["ac"]           = nil
 	MAA.dbg("--MAA:resetWindowPointers(): success")
 end
 
 function addWindowPointers(hWnd)
 	MAA.dbg("++MAA:addWindowPointers()")
 	self.resetWindowPointers()
-	self.WindowPointers["instructions"]       = hWnd.instructions
-	self.WindowPointers["button_roll"]        = hWnd.attack_roll
-	self.WindowPointers["attacker"]["name"]   = hWnd.attacker.subwindow["name"]
-	self.WindowPointers["attacker"]["token"]  = hWnd.attacker.subwindow["token"]
-	self.WindowPointers["attacker"]["atk"]    = hWnd.attacker.subwindow["atk"]
-	self.WindowPointers["attacker"]["qty"]    = hWnd.attacker.subwindow["qty"]
-	self.WindowPointers["attacker"]["action"] = hWnd.attacker.subwindow["action_cycler"].subwindow["action"]
-	self.WindowPointers["target"]["name"]     = hWnd.target.subwindow["name"]
-	self.WindowPointers["target"]["token"]    = hWnd.target.subwindow["token"]
-	self.WindowPointers["target"]["ac"]       = hWnd.target.subwindow["ac"]
+	self.WindowPointers["instructions"]           = hWnd.instructions
+	self.WindowPointers["subwindows"]["attacker"] = hWnd.attacker
+	self.WindowPointers["subwindows"]["target"]   = hWnd.target
+	self.WindowPointers["button_roll"]            = hWnd.attack_roll
+	self.WindowPointers["attacker"]["name"]       = hWnd.attacker.subwindow["name"]
+	self.WindowPointers["attacker"]["token"]      = hWnd.attacker.subwindow["token"]
+	self.WindowPointers["attacker"]["atk"]        = hWnd.attacker.subwindow["atk"]
+	self.WindowPointers["attacker"]["qty"]        = hWnd.attacker.subwindow["qty"]
+	self.WindowPointers["attacker"]["action"]     = hWnd.attacker.subwindow["action_cycler"].subwindow["action"]
+	self.WindowPointers["target"]["name"]         = hWnd.target.subwindow["name"]
+	self.WindowPointers["target"]["token"]        = hWnd.target.subwindow["token"]
+	self.WindowPointers["target"]["ac"]           = hWnd.target.subwindow["ac"]
 	MAA.dbg("--MAA:addWindowPointers(): success")
 end
 
