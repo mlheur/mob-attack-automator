@@ -68,6 +68,11 @@
 				<top />
 				<left />
 			</anchored>
+			<script>
+				function onDoubleClick()
+					MAA.hToken_openActor(self,window)
+				end
+			</script>
 		</tokencontrol>
 	</template>
 
