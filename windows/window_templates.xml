@@ -190,10 +190,6 @@
 						MAA.updateAttackAction(1)
 						return true;
 					end
-					--function onDoubleClick(x, y)
-					--	-- Emulate click
-					--	self.onClickRelease(1, x, y);
-					--end
 				</script>
 		</basicstringc>
 	</template>
