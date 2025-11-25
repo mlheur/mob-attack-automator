@@ -482,6 +482,8 @@ function hBtn_onRollAttack(hCtl,hWnd)
 
 	tSkipTurnEffect.nInit = nActiveCT.getChild("initresult").getValue() - 1
 
+	ModifierManager.lock()
+
 	self.tResults = self.initRestults()
 	self.tResults["pending_damages"] = iMobSize
 	self.tResults["pending_attacks"] = iMobSize
@@ -499,7 +501,6 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
 		EffectManager.addEffect("","",rAttacker.sCTNode,tSkipTurnEffect)
 	end
-	-- Interface.findWindow(WNDCLASS,WNDDATA).close()
 	self.updateButtonLabel()
 	MAA.dbg("--MAA:hBtn_onRollAttack(): Success")
 end
@@ -541,16 +542,13 @@ function submitDamageThrow(rSource,rTarget)
 		end
 	end
 	local rRoll = ActionDamage.getRoll(rSource, rAction)
-	MAA.__recurseTable("submitDamageThrow() generated rRoll",rRoll)
 	ActionDamage.modDamage(rAttacker, rTarget, rRoll)
 	rRoll.sType = MODNAME.."_damage" -- triggers custom callback, for summary messaging
 	rAction.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-	MAA.__recurseTable("submitDamageThrow() submitting rRoll",rRoll)
 	ActionsManager.actionDirect(rSource, "damage", {rRoll}, {{rTarget}})
 end
 
 function handleDamageThrowResult(rSource,rTarget,rRoll)
-	MAA.__recurseTable("handleDamageThrowResult() rRoll",rRoll)
 	rRoll.sType = "damage"
 	ActionDamage.onDamageRoll(rSource,rRoll);
 	ActionDamage.onDamage(rSource, rTarget, rRoll);
@@ -624,6 +622,7 @@ function printResultsWhenAble()
 		Comm.deliverChatMessage(self.buildAttackMessage())
 		Comm.deliverChatMessage(self.buildDamageMessage())
 		self.tResults = initRestults()
+		ModifierManager.unlock()
 		if bHandlerRemovalRequested then self._really_removeHandlers() end
 	end
 end
