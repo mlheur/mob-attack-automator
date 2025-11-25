@@ -171,6 +171,9 @@ end
 
 --------------------------------------------------------------------------------
 
+-- TODO: Refactor this with fewer branches.
+--   Use DB.get* functions so that null interim values are handled gracefully.
+
 local function __getAllActors(bUpdate)
 	MAA.dbg("++MAA:__getAllActors()")
 	local nActiveCT = CombatManager.getActiveCT()
@@ -259,6 +262,7 @@ end
 
 --------------------------------------------------------------------------------
 
+-- TODO: See about using ActionManager and other 5E/CoreRPG managers to do these
 local function __getActionNode(nActionList,sActionName)
 	local i,n
 	for i,n in pairs(nActionList.getChildren()) do
