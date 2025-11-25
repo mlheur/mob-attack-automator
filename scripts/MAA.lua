@@ -592,6 +592,7 @@ function buildAttackMessage()
 	if self.tResults["crit"] == 0 then
 		sConclusion2 = " and"..sConclusion2
 		sConclusion3 = ".  Sadly, none were critical."
+		if self.tResults["hits"] == 0 then sConclusion3 = "" end
 	elseif self.tResults["crit"] == 1 then
 		sConclusion3 = " and 1 critical hit!"
 	else
@@ -615,7 +616,7 @@ function buildDamageMessage()
 			if self.tResults["crit"] == self.tResults["mobsize"] then
 				sChatEntry = sChatEntry .. "  Their victim has been critically injured!"
 			elseif self.tResults["crit"] > 0 then
-				sChatEntry = sChatEntry .. "  It was a particularily attack!"
+				sChatEntry = sChatEntry .. "  It was a particularily viscious attack!"
 			end
 		end
 	end
