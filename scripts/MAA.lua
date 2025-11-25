@@ -218,6 +218,7 @@ end
 --------------------------------------------------------------------------------
 
 function updateButtonLabel(nActiveCT)
+	if type(self.WindowPointers["button_roll"]) ~= "buttoncontrol" then return end
 	if nActiveCT == nil then
 		nActiveCT = CombatManager.getActiveCT()
 	end
