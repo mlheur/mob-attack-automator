@@ -407,15 +407,15 @@ function onTargetNoderefUpdated(nP,sValue)
 end
 
 function onUpdateActiveCT(nU)
-	MAA.dbg("++MAA:onUpdateActiveCT()")
+	--MAA.dbg("++MAA:onUpdateActiveCT()")
 	-- prevent excess execution by only firing when _this_ node's active value becomes true
 	local bActive = nU.getValue()
 	if bActive == 0 then
-		MAA.dbg("--MAA:onUpdateActiveCT(): bActive is false, only update on the active CT entry, if any exist.")
+		--MAA.dbg("--MAA:onUpdateActiveCT(): bActive is false, only update on the active CT entry, if any exist.")
 		return
 	end
 	self.updateAll()
-	MAA.dbg("--MAA:onUpdateActiveCT(): Executed")
+	--MAA.dbg("+-MAA:onUpdateActiveCT(): Executed")
 end
 
 --------------------------------------------------------------------------------
@@ -521,7 +521,7 @@ function hBtn_onRollAttack(hCtl,hWnd)
 end
 
 function handleAttackThrowResult(rSource, rTarget, rRoll)
-	MAA.dbg("++MAA:handleAttackThrowResult()")
+	--MAA.dbg("++MAA:handleAttackThrowResult()")
 	rRoll.sType = "attack"
 	ActionAttack.onAttack(rSource, rTarget, rRoll);
 	ActionAttack.setupAttackResolve(rRoll, rSource, rTarget);
@@ -537,7 +537,7 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 	end
 	self.tResults["pending_attacks"] = self.tResults["pending_attacks"] - 1
 	self.finalizeMobAttack()
-	MAA.dbg("--MAA:handleAttackThrowResult(): Success")
+	--MAA.dbg("--MAA:handleAttackThrowResult(): Success")
 end
 
 --------------------------------------------------------------------------------
