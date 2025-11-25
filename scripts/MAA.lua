@@ -24,6 +24,8 @@ function getInstructions()
 	sInstructions = sInstructions .. "<p>Use the action selector to cycle through the Active NPC's actions.</p>"
 	sInstructions = sInstructions .. "<p>Click the ["..sBtnName.."] button to roll the attacks.  "..sModName.." will roll damage for regular and critical hits.</p>"
 	sInstructions = sInstructions .. "<p>Feature: Actions that have subsequent effects, e.g. poisonous snake bite 1 piercing damage plus a save with further poison damage, only the original 1 damage will be applied.</p>"
+	sInstructions = sInstructions .. "<p>Feature: The modifier stack will be locked and applied to every roll performed during a "..sBtnName..".  For ADV/DIS on Attack rolls, this works how one would expect.  For +/- 2/5 on Attack rolls, the Damage has the same modifier applied.</p>"
+	sInstructions = sInstructions .. "<p>Feature: Go at a normal pace, the global values are not threadsafe against onRoll callbacks.</p>"
 	return sInstructions
 end
 
@@ -503,7 +505,6 @@ function hBtn_onRollAttack(hCtl,hWnd)
 		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
 		EffectManager.addEffect("","",rAttacker.sCTNode,tSkipTurnEffect)
 	end
-	self.updateButtonLabel()
 	MAA.dbg("--MAA:hBtn_onRollAttack(): Success")
 end
 
@@ -523,7 +524,7 @@ function handleAttackThrowResult(rSource, rTarget, rRoll)
 		self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
 	end
 	self.tResults["pending_attacks"] = self.tResults["pending_attacks"] - 1
-	self.printResultsWhenAble()
+	self.finalizeMobAttack()
 	MAA.dbg("--MAA:handleAttackThrowResult(): Success")
 end
 
@@ -556,7 +557,7 @@ function handleDamageThrowResult(rSource,rTarget,rRoll)
 	ActionDamage.onDamage(rSource, rTarget, rRoll);
 	self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
 	self.tResults["damage"] = self.tResults["damage"] + ActionsManager.total(rRoll)
-	self.printResultsWhenAble()
+	self.finalizeMobAttack()
 end
 
 --------------------------------------------------------------------------------
@@ -619,12 +620,13 @@ function buildDamageMessage()
 	return buildMessage(sChatEntry)
 end
 
-function printResultsWhenAble()
+function finalizeMobAttack()
 	if self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
+		ModifierManager.unlock()
 		Comm.deliverChatMessage(self.buildAttackMessage())
 		Comm.deliverChatMessage(self.buildDamageMessage())
 		self.tResults = initRestults()
-		ModifierManager.unlock()
+		self.updateButtonLabel()
 		if bHandlerRemovalRequested then self._really_removeHandlers() end
 	end
 end

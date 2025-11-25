@@ -158,6 +158,7 @@
 					end
 				</script>
 			</formattedtextcontrol>
+			<scrollbar_content_text />
 		</sheetdata>
 	</windowclass>
 
