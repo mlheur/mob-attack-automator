@@ -684,10 +684,10 @@ function __recurseTable(sMSG,tTable,sPK,iDepth)
 		return
 	end
 	for k,v in pairs(tTable) do
-		local vtype = type(v)
+		local vType = type(v)
 		newK = sPK .. ":"..k
-		if vtype ~= "table" then
-			MAA.dbg("  "..sMSG.." iDepth=["..iDepth.."] newK=["..newK.."] k=["..k.."], type(v)=["..type(v).."], tostring(v)=["..tostring(v).."]")
+		if vType ~= "table" then
+			MAA.dbg("  "..sMSG.." iDepth=["..iDepth.."] newK=["..newK.."] k=["..k.."], type(v)=["..vType.."], tostring(v)=["..tostring(v).."]")
 		else
 			__recurseTable(sMSG,v,newK,iDepth+1)
 		end
