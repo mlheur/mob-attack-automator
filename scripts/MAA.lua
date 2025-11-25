@@ -457,7 +457,9 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	end
 	local rSource = ActorManager.resolveActor(nActiveCT.getPath())
 	if EffectManager.hasEffect(rSource,"SKIPTURN") then
-		CombatManager.nextActor()
+		if	self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
+			CombatManager.nextActor()
+		end
 		MAA.dbg("--MAA:hBtn_onRollAttack(): actor has SKIPTURN effect")
 		return
 	end
