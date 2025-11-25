@@ -220,9 +220,11 @@ function updateButtonLabel(nActiveCT)
 		nActiveCT = CombatManager.getActiveCT()
 	end
 	if nActiveCT and EffectManager.hasEffect(ActorManager.resolveActor(nActiveCT),"SKIPTURN") then
-		self.WindowPointers["button_roll"].setText("call CombatManager.nextActor()")
+		self.WindowPointers["button_roll"].setText("Next Actor")
+		self.WindowPointers["button_roll"].setFrame("buttondisabled",2,2,2,2)
 	else
 		self.WindowPointers["button_roll"].setText(Interface.getString("MAA_label_button_roll"))
+		self.WindowPointers["button_roll"].setFrame("buttonup",2,2,2,2)
 	end
 end
 
