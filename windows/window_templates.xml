@@ -161,6 +161,7 @@
 	<template name="MAA_action_value">
 		<basicstringc name="action">
 			<active />
+			<readonly />
 			<fastinit />
 			<center />
 			<font>charsheet_header</font>
@@ -173,6 +174,19 @@
 				<left anchor="right" offset="8" />
 				<right anchor="left" offset="-8" parent="cycle_right" />
 			</anchored>
+				<script>
+					function onClickDown()
+						return true;
+					end
+					function onClickRelease(_, x, y)
+						MAA.updateAttackAction(1)
+						return true;
+					end
+					--function onDoubleClick(x, y)
+					--	-- Emulate click
+					--	self.onClickRelease(1, x, y);
+					--end
+				</script>
 		</basicstringc>
 	</template>
 
