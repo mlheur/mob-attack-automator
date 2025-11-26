@@ -1,10 +1,12 @@
-DEBUG = false
+DEBUG = true
 
 MODNAME  = "MAA"
 WNDCLASS = MODNAME
 WNDDATA  = MODNAME
 
 WindowPointers = {}
+OOBMSG_TokenWidgetManager = "OOBMSG_"..MODNAME.."_TokenWidgetManager"
+bHandlerRemovalRequested = false
 
 local tSkipTurnEffect = {
 	sName     = "SKIPTURN",
@@ -41,7 +43,6 @@ end
 --------------------------------------------------------------------------------
 -- host --> host+clients messaging
 --------------------------------------------------------------------------------
-OOBMSG_TokenWidgetManager = "OOBMSG_"..MODNAME.."_TokenWidgetManager"
 
 function initOOB()
 	OOBManager.registerOOBMsgHandler(self.OOBMSG_TokenWidgetManager, self.recvTokenCommand)
@@ -331,7 +332,6 @@ end
 --------------------------------------------------------------------------------
 -- Event handlers called from onEvent combat tracker databasenodes.
 --------------------------------------------------------------------------------
-bHandlerRemovalRequested = false
 function addHandlers(hWnd)
 	MAA.dbg("++MAA:addHandlers()")
 	DB.addHandler(CombatManager.getTrackerPath() .. ".*.targets", "onChildDeleted", onTargetChildDeleted)
@@ -521,15 +521,15 @@ function hBtn_onRollAttack(hCtl,hWnd)
 	self.tResults["name"] = sAttackerName
 	self.tResults["action"] = sAction
 	self.tResults["victim"] = rTarget.sName
+	ActionsManager.lockModifiers()
+	self.bModStackUsed = false
 	local i,sMoberPath
-	ModifierManager.lock()
 	for i,sMoberPath in ipairs(self.mobList) do
 		local rAttacker = ActorManager.resolveActor(sMoberPath)
 		local rRoll = ActionAttack.getRoll(rAttacker, rAction)
+		self.bModStackUsed = ActionsManager.applyModifiers(rAttacker, rTarget, rRoll)
 		rRoll.sType = MODNAME.."_attack" -- triggers custom callback
-		rAction.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-		ActionAttack.modAttack(rAttacker, rTarget, rRoll)
-		ActionsManager.actionDirect(rAttacker, "attack", {rRoll}, {{rTarget}})
+		ActionsManager.roll(rSource, rTarget, rRoll)
 		EffectManager.addEffect("","",rAttacker.sCTNode,tSkipTurnEffect)
 	end
 	MAA.dbg("--MAA:hBtn_onRollAttack(): Success")
@@ -538,8 +538,7 @@ end
 function handleAttackThrowResult(rSource, rTarget, rRoll)
 	--MAA.dbg("++MAA:handleAttackThrowResult()")
 	rRoll.sType = "attack"
-	ActionAttack.onAttack(rSource, rTarget, rRoll);
-	ActionAttack.setupAttackResolve(rRoll, rSource, rTarget);
+	ActionsManager.resolveAction(rSource, rTarget, rRoll)
 	if rRoll.sResults == "[CRITICAL HIT]" then
 		self.tResults["crit"] = self.tResults["crit"] + 1
 		self.submitDamageThrow(rSource,rTarget)
@@ -572,16 +571,14 @@ function submitDamageThrow(rSource,rTarget)
 		end
 	end
 	local rRoll = ActionDamage.getRoll(rSource, rAction)
-	ActionDamage.modDamage(rAttacker, rTarget, rRoll)
+	ActionsManager.applyModifiers(rAttacker, rTarget, rRoll, true)
 	rRoll.sType = MODNAME.."_damage" -- triggers custom callback, for summary messaging
-	rAction.sDesc = Interface.getString("MAA_label_button_roll") .. " ["..sAction.."]"
-	ActionsManager.actionDirect(rSource, "damage", {rRoll}, {{rTarget}})
+	ActionsManager.roll(rSource, rTarget, rRoll)
 end
 
 function handleDamageThrowResult(rSource,rTarget,rRoll)
 	rRoll.sType = "damage"
-	ActionDamage.onDamageRoll(rSource,rRoll);
-	ActionDamage.onDamage(rSource, rTarget, rRoll);
+	ActionsManager.resolveAction(rSource, rTarget, rRoll)
 	self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
 	self.tResults["damage"] = self.tResults["damage"] + ActionsManager.total(rRoll)
 	self.finalizeMobAttack()
@@ -650,12 +647,12 @@ end
 
 function finalizeMobAttack()
 	if self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
-		ModifierManager.unlock()
+		ActionsManager.unlockModifiers(self.bModStackUsed)
 		Comm.deliverChatMessage(self.buildAttackMessage())
 		Comm.deliverChatMessage(self.buildDamageMessage())
 		self.tResults = initRestults()
 		self.updateButtonLabel()
-		if bHandlerRemovalRequested then self._really_removeHandlers() end
+		if self.bHandlerRemovalRequested then self._really_removeHandlers() end
 	end
 end
 
