@@ -113,7 +113,7 @@
 				</anchored>
 				<script>
 					function onButtonPress()
-						MAA.updateAttackAction(-1)
+						MAA.cycleAttackAction(-1)
 					end
 				</script>
 				<icon normal="arrow_sm_left" />
@@ -125,7 +125,7 @@
 				<icon normal="arrow_sm_right" />
 				<script>
 					function onButtonPress()
-						MAA.updateAttackAction(1)
+						MAA.cycleAttackAction(1)
 					end
 				</script>
 			</MAA_button_cycler>

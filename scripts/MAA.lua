@@ -5,6 +5,7 @@ WNDCLASS = MODNAME
 WNDDATA  = MODNAME
 
 WindowPointers = {}
+resolvedMob = {}
 OOBMSG_TokenWidgetManager = "OOBMSG_"..MODNAME.."_TokenWidgetManager"
 bHandlerRemovalRequested = false
 
@@ -118,139 +119,6 @@ end
 
 --------------------------------------------------------------------------------
 
-function countAttackers(nActor,sTargetNoderef,bUpdate)
-	--MAA.dbg("++MAA:countAttackers()")
-	local iActorInit = DB.getValue(nActor,"initresult")
-	if iActorInit == nil then
-		--MAA.dbg("--MAA:countAttackers(): failure DB.getValue(nActor,'initresult') returned nil")
-		return
-	end
-	local sRecordClass,sSourcelink = DB.getValue(nActor,"sourcelink")
-	self.mobList = {}
-	local tActiveWidgetTracker = {}
-	local i,n,x = 0,0,0
-	local tCombatList = DB.getChildren(CombatManager.getTrackerPath())
-	for i,n in pairs(tCombatList) do
-		local iThisInit = DB.getValue(n,"initresult")
-		tActiveWidgetTracker[i] = false
-		local bHighlight = false
-		if iThisInit == iActorInit then
-			local sThisClass,sThisSourcelink = DB.getValue(n,"sourcelink")
-			if sThisSourcelink == sSourcelink then
-				local nThisTargetsList = n.getChild("targets")
-				if (not (nThisTargetsList == nil)) then
-					local i2,n2
-					for i2,n2 in pairs(nThisTargetsList.getChildren()) do
-						if DB.getValue(n2,"noderef") == sTargetNoderef then
-							local sActor = n.getPath()
-							table.insert(self.mobList, sActor)
-							tActiveWidgetTracker[i] = true
-							x = x + 1
-							bHighlight = true
-						end
-					end
-				end
-			end
-		end
-		if bUpdate then self.sendTokenCommand("setActiveWidget",n.getPath(),bHighlight) end
-	end
-	--MAA.dbg("--MAA:countAttackers(): success x=["..x.."]")
-	return x
-end
-
---------------------------------------------------------------------------------
-
--- TODO: Refactor this with fewer branches.
---   Use DB.get* functions so that null interim values are handled gracefully.
-
-local function __getAllActors(bUpdate)
-	MAA.dbg("++MAA:__getAllActors()")
-	local nActiveCT = CombatManager.getActiveCT()
-	if nActiveCT == nil then
-		MAA.dbg("--MAA:__getAllActors(): CombatManager.getActiveCT() returned nil")
-		return
-	end
-	local sRecord,sLink = DB.getValue(nActiveCT,"link")
-	if not (sRecord == "npc") then
-		MAA.dbg("--MAA:__getAllActors(): CombatManager.getActiveCT().link.class is not 'npc'")
-		return
-	end
-	local nActiveTargetsList = nActiveCT.getChild("targets")
-	if (nActiveTargetsList == nil) or (not (nActiveTargetsList.getChildCount() == 1)) then
-		MAA.dbg("--MAA:__getAllActors(): nActiveTargetsList is nil or nActiveTargetsList.getChildCount() is not 1")
-		return
-	end
-	local nTargetNoderef = nil
-	for i,n in pairs(nActiveTargetsList.getChildren()) do
-		nTargetNoderef = n.getChild("noderef")
-	end
-	if nTargetNoderef == nil then
-		MAA.dbg("--MAA:__getAllActors(): nTargetNoderef is nil")
-		return
-	end
-	local sTargetNoderef = nTargetNoderef.getValue()
-	local nTarget = DB.findNode(sTargetNoderef)
-	if nTarget == nil then
-		MAA.dbg("--MAA:__getAllActors(): CombatManager resolved the target to nil")
-		return
-	end
-	local iMobSize = self.countAttackers(nActiveCT,sTargetNoderef,bUpdate)
-	if iMobSize == nil then
-		MAA.dbg("--MAA:__getAllActors(): iMobSize is nil")
-		return
-	end
-	if iMobSize < 1 then
-		MAA.dbg("--MAA:__getAllActors(): iMobSize is less than 1")
-		return
-	end
-	MAA.dbg("--MAA:__getAllActors(): Success")
-	return nActiveCT,nTarget,iMobSize
-end
-
---------------------------------------------------------------------------------
-
-function updateButtonLabel(nActiveCT)
-	if type(self.WindowPointers["button_roll"]) ~= "buttoncontrol" then return end
-	if nActiveCT == nil then
-		nActiveCT = CombatManager.getActiveCT()
-	end
-	if nActiveCT and EffectManager.hasEffect(ActorManager.resolveActor(nActiveCT),"SKIPTURN") then
-		self.WindowPointers["button_roll"].setText("Next Actor")
-		self.WindowPointers["button_roll"].setFrame("buttondisabled",2,2,2,2)
-	else
-		self.WindowPointers["button_roll"].setText(Interface.getString("MAA_label_button_roll"))
-		self.WindowPointers["button_roll"].setFrame("buttonup",2,2,2,2)
-	end
-end
-
-function updateAll()
-	MAA.dbg("++MAA:updateAll()")
-	local nActiveCT,nTarget,iMobSize = __getAllActors(true)
-	if nActiveCT == nil then
-		self.showHelp()
-		MAA.dbg("--MAA:updateAll(): failed to get all actors")
-		return
-	end
-	self.showHelp(false)
-	self.updateAttackAction(0,nActiveCT)
-	local sAttackerName = DB.getValue(nActiveCT,"name","sAttackerName==nil")
-	local sAttackerToken = DB.getValue(nActiveCT,"token")
-	local sTargetName = DB.getValue(nTarget,"name","sTargetName==nil")
-	local sTargetToken = DB.getValue(nTarget,"token")
-	local iTargetAC = DB.getValue(nTarget,"ac")
-	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
-	self.WindowPointers["attacker"]["token"].setPrototype(sAttackerToken)
-	self.WindowPointers["attacker"]["qty"].setValue(iMobSize)
-	self.WindowPointers["target"]["name"].setValue(sTargetName)
-	self.WindowPointers["target"]["token"].setPrototype(sTargetToken)
-	self.WindowPointers["target"]["ac"].setValue(iTargetAC)
-	self.updateButtonLabel(nActiveCT)
-	MAA.dbg("--MAA:updateAll(): success")
-	return
-end
-
---------------------------------------------------------------------------------
-
 -- TODO: See about using ActionManager and other 5E/CoreRPG managers to do these
 local function __getAttackBonus(sActionValue)
 	local nStart,nEnd = string.find(sActionValue, "ATK: ([-+]?%d)")
@@ -294,39 +162,119 @@ end
 
 --------------------------------------------------------------------------------
 
-function updateAttackAction(iAmt,nActiveCT)
-	if nActiveCT == nil then
-		nActiveCT = CombatManager.getActiveCT()
-		if nActiveCT == nil then return end
-		local sRecord,sLink = DB.getValue(nActiveCT,"link")
-		if not (sRecord == "npc") then return end
-	end
-	local nActionList = nActiveCT.getChild("actions")
-	if nActionList == nil then return end
-	local sOldAction = self.WindowPointers["attacker"]["action"].getValue()
-	local iOldAction = __getActionIndex(nActionList,sOldAction)
-	local iActionLen = nActionList.getChildCount()
-	local sAttackBonus = nil
-	local sActionName  = sOldAction
-	if iAmt == 0 then
-		if sOldAction == nil or sOldAction == "" or iOldAction == nil or iOldAction == 0 or iOldAction > iActionLen then
-			sActionName,sAttackBonus = __getActionValues(nActionList,1)
-		else
-			sActionName,sAttackBonus = __getActionValues(nActionList,iOldAction)
-		end
-	elseif iAmt == -1 or iAmt == 1 then
-		local iNewAction = iOldAction + iAmt
-		if iNewAction == 0 then
-			iNewAction = iActionLen
-		elseif iNewAction > iActionLen then
-			iNewAction = 1
-		end
-		sActionName,sAttackBonus = __getActionValues(nActionList,iNewAction)
-	else
+local function __resolveAction(nAction)
+	local rPower = CombatManager2.parseAttackLine(DB.getValue(nAction,"value",""))
+	sAction = tostring(nAction)
+	MAA.__recurseTable("__resolveAction(sAction=["..sAction.."]) rPower",rPower)
+	return rPower
+end
+
+function cycleAttackAction(iAmt)
+	iAmt = iAmt or 0
+	if iAmt == 0 and self.resolvedMob.resolvedAction ~= nil then return end
+
+	local nodeCT = ActorManager.getCTNode(self.resolvedMob.rAttacker)
+	if nodeCT == nil then return end
+
+	local aPowerActions = DB.getChildList(nodeCT,PowerManagerCore.getPowerActionsPath())
+	MAA.__recurseTable("cycleAttackAction() aPowerActions",aPowerActions)
+
+	local nNewAction = nil
+	if #aPowerActions < 1 then
+		self.resolvedMob.resolvedAction = nil
 		return
 	end
-	self.WindowPointers["attacker"]["action"].setValue(sActionName)
-	self.WindowPointers["attacker"]["atk"].setValue(sAttackBonus)
+
+	if #aPowerActions == 1 then
+		self.resolvedMob.resolvedAction = __resolveAction(aPowerActions[1])
+	else
+		if iAmt < 0 then
+
+		else -- iAmt is guaranteed > 0 since == 0 returned at top.
+		end
+	end
+
+end
+
+--------------------------------------------------------------------------------
+
+local function __isTargetting(rAttacker)
+	local aTargets = TargetingManager.getFullTargets(rAttacker)
+	if aTargets and #aTargets > 0 then
+		local v
+		for _,v in ipairs(aTargets) do
+			if v.sCTNode == self.resolvedMob.rTarget.sCTNode then return true end
+		end
+	end
+	return false
+end
+
+function updateMobbers()
+	local aMob = {}
+	local rAttacker = self.resolvedMob.rAttacker
+	local nInitResult = DB.getValue(rAttacker.sCTNode, "initresult", 0);
+	local v
+	for _,v in ipairs(DB.getChildren(CombatManager.getTrackerPath())) do
+		local bHighlight = false
+		rMobber = ActorManager.resolveActor(v)
+		if rMobber ~= nil then
+			local bMatchCreatureNode = rMobber.sCreatureNode == rAttacker.sCreatureNode
+			local bMatchInitResult = DB.getValue(rMobber,"initresult",0) == nInitResult
+			local bMatchTarget = __isTargetting(rMobber)
+			if bMatchCreatureNode and bMatchInitResult and bMatchTarget then
+				table.insert(aMob, rMobber)
+				bHighlight = true
+			end
+			self.sendTokenCommand("setActiveWidget",rMobber.sCTNode,bHighlight)
+		end
+	end
+	self.resolvedMob.aMob = aMob
+end
+
+--------------------------------------------------------------------------------
+
+function updateButtonLabel()
+	if type(self.WindowPointers["button_roll"]) ~= "buttoncontrol" or self.resolvedMob.rAttacker == nil then
+		return
+	end
+	if EffectManager.hasEffect(self.resolvedMob.rAttacker,"SKIPTURN") then
+		self.WindowPointers["button_roll"].setText("Next Actor")
+		self.WindowPointers["button_roll"].setFrame("buttondisabled",2,2,2,2)
+	else
+		self.WindowPointers["button_roll"].setText(Interface.getString("MAA_label_button_roll"))
+		self.WindowPointers["button_roll"].setFrame("buttonup",2,2,2,2)
+	end
+end
+
+function updateAll()
+	MAA.dbg("++MAA:updateAll()")
+
+	self.resolvedMob = {}
+
+	self.resolvedMob.rAttacker = ActorManager.resolveActor(CombatManager.getActiveCT())
+	self.cycleAttackAction()
+	local aTargets = TargetingManager.getFullTargets(self.resolvedMob.rAttacker)
+	if self.resolvedMob.rAttacker == nil or #aTargets ~= 1 or self.resolvedMob.resolvedAction == nil then
+		self.showHelp()
+		MAA.dbg("--MAA:updateAll(): failed, tostring(rAttacker)=["..tostring(self.resolvedMob.rAttacker).."] #aTargets=["..#aTargets.."] or resolvedAction=["..self.resolvedMob.resolvedAction.."]")
+		return
+	end
+
+	self.showHelp(false)
+	self.resolvedMob.rTarget = aTargets[1]; aTargets = nil
+	self.updateMobbers()
+	
+	self.WindowPointers["attacker"]["name"].setValue(ActorManager.getDisplayName(self.resolvedMob.rAttacker))
+	self.WindowPointers["attacker"]["token"].setPrototype(DB.getValue(self.resolvedMob.rAttacker.sCTNode,"token","token_empty"))
+	self.WindowPointers["attacker"]["action"].setValue(self.resolvedMob.resolvedAction.sAction or "No Actions Available")
+	self.WindowPointers["attacker"]["atk"].setValue(self.resolvedMob.resolvedAction.nAttackBonus or 0)
+	self.WindowPointers["attacker"]["qty"].setValue(#(self.resolvedMob.aMob))
+	self.WindowPointers["target"]["name"].setValue(ActorManager.getDisplayName(rTarget))
+	self.WindowPointers["target"]["token"].setPrototype(DB.getValue(self.resolvedMob.rTarget.sCTNode,"token","token_empty"))
+	self.WindowPointers["target"]["ac"].setValue(DB.getValue(self.resolvedMob.rTarget.sCTNode,"ac","10"))
+	self.updateButtonLabel()
+	MAA.dbg("--MAA:updateAll(): success")
+	return
 end
 
 --------------------------------------------------------------------------------
@@ -365,11 +313,10 @@ function removeHandlers()
 	MAA.dbg("--MAA:removeHandlers(): success")
 end
 
-function onTargetChildDeleted(nP)
-	MAA.dbg("++MAA:function onTargetChildDeleted(nP.getPath=["..nP.getPath().."])")
-	local nAttacker = nP.getParent()
-	if CombatManager.isActive(nAttacker) then
-		if nP.getChildCount() == 1 then
+function onTargetChildDeleted(nTargetsList)
+	MAA.dbg("++MAA:function onTargetChildDeleted(nTargetsList.getPath=["..nTargetsList.getPath().."])")
+	if CombatManager.isActive(nTargetsList.getParent()) then
+		if nTargetsList.getChildCount() == 1 then
 			self.updateAll()
 		else
 			self.showHelp()
@@ -380,9 +327,9 @@ function onTargetChildDeleted(nP)
 	MAA.dbg("--MAA:function onTargetChildDeleted()")
 end
 
-function onTargetNoderefUpdated(nP,sValue)
+function onTargetNoderefUpdated(nNoderef,sValue)
 	MAA.dbg("++MAA:onTargetNoderefUpdated()")
-	local nTargetsList = nP.getParent().getParent()
+	local nTargetsList = nNoderef.getParent().getParent()
 	local nAttacker = nTargetsList.getParent()
 	local iCurrentTargets = nTargetsList.getChildCount()
 	if CombatManager.isActive(nAttacker) then
@@ -397,8 +344,8 @@ function onTargetNoderefUpdated(nP,sValue)
 	MAA.dbg("--MAA:onTargetNoderefUpdated(): Success")
 end
 
-function onUpdateActiveCT(nU)
-	if nU.getValue() == 0 then return end
+function onUpdateActiveCT(nActiveCTActiveValue)
+	if nActiveCTActiveValue.getValue() == 0 then return end
 	self.updateAll()
 end
 

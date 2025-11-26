@@ -187,7 +187,7 @@
 						return true;
 					end
 					function onClickRelease(_, x, y)
-						MAA.updateAttackAction(1)
+						MAA.cycleAttackAction(1)
 						return true;
 					end
 				</script>
