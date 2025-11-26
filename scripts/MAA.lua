@@ -251,6 +251,14 @@ end
 --------------------------------------------------------------------------------
 
 -- TODO: See about using ActionManager and other 5E/CoreRPG managers to do these
+local function __getAttackBonus(sActionValue)
+	local nStart,nEnd = string.find(sActionValue, "ATK: ([-+]?%d)")
+	if nStart and nEnd then
+		nStart = nStart + 5
+		return string.sub(sActionValue,nStart,nEnd)
+	end
+	return 0
+end
 local function __getActionNode(nActionList,sActionName)
 	local i,n
 	for i,n in pairs(nActionList.getChildren()) do
@@ -281,11 +289,6 @@ local function __getActionValues(nActionList,iActionIndex)
 		end
 	end
 	return "** Unarmed **","-1"
-end
-function __getAttackBonus(sActionValue)
-	local nStart,nEnd = string.find(sActionValue, "ATK: ([-+]?%d)")
-	nStart = nStart + 5
-	return string.sub(sActionValue,nStart,nEnd)
 end
 
 --------------------------------------------------------------------------------
