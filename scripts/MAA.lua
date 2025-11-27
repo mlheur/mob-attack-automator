@@ -413,22 +413,17 @@ end
 
 function hToken_openActor(hToken,hWnd)
 	MAA.dbg("++MAA:hToken_openActor()")
-	local nActiveCT,nTarget,iMobSize = __getAllActors(false)
-	if nActiveCT == nil then
-		MAA.dbg("--MAA:hToken_openActor(): failed to get all actors")
-		return
-	end
 	sWndName = hWnd.getClass()
-	local nActor = nil
+	local rActor = nil
 	if sWndName == "MAA_attacker" then
-		nActor = nActiveCT
+		rActor = self.rMob.rAttacker
 	elseif sWndName == "MAA_target" then
-		nActor = nTarget
+		rActor = self.rMob.rTarget
 	else
 		MAA.dbg("--MAA:hToken_openActor(): failed to determine source actor")
 	end
-	local sClass, sRecord = DB.getValue(nActor, "link", "", "");
-	if sRecord == "" then sRecord = nActor end
+	local sClass, sRecord = DB.getValue(rActor.sCTNode..".link", "", "");
+	if sRecord == "" then sRecord = rActor.sCTNode end
 	Interface.openWindow(sClass, sRecord);
 	MAA.dbg("--MAA:hToken_openActor(): success")
 end
