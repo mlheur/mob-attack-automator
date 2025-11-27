@@ -3,9 +3,11 @@ DEBUG = true
 MODNAME  = "MAA"
 WNDCLASS = MODNAME
 WNDDATA  = MODNAME
-
 phWnd = {}
-rMob = {}
+
+tResults = {}
+pending_rolls = {}
+
 OOBMSG_TokenWidgetManager = "OOBMSG_"..MODNAME.."_TokenWidgetManager"
 bHandlerRemovalRequested = false
 
@@ -119,16 +121,36 @@ end
 
 --------------------------------------------------------------------------------
 
-local function __getAttackAction(nAction)
+local function __decode_MAA_action(sAction)
+	local nStrlen = string.len(sAction)
+	local nStrip  = string.len(MODNAME.."_")
+	return sting.sub(nStrip+1,nStrlen)
+end
+
+local function __encode_MAA_action(sAction)
+	return MODNAME .. "_" .. sAction
+end
+
+--------------------------------------------------------------------------------
+
+local function __resolveActionComponent(nAction,sComponent)
 	local rPower = CombatManager2.parseAttackLine(DB.getValue(nAction,"value",""))
 	sAction = tostring(nAction)
 	MAA.__recurseTable("MAA:__getAttackAction(sAction=["..sAction.."]) rPower",rPower)
 	local i,v
 	for i,v in ipairs(rPower.aAbilities) do
-		if v.sType == "attack" then
+		if v.sType == sComponent then
 			return rPower,i
 		end
 	end
+end
+
+local function __getAttackAction(nAction)
+	return __resolveActionComponent(nAction,"attack")
+end
+
+local function __getDamageAction(nAction)
+	return __resolveActionComponent(nAction,"damage")
 end
 
 local function __updateActionValues()
@@ -146,7 +168,7 @@ function cycleAttackAction(iAmt)
 
 	local nodeCT = ActorManager.getCTNode(self.rMob.rAttacker)
 	if nodeCT == nil then
-		MAA.dbg("--MAA:cycleAttackAction(): unable to get nodeCT or rAttacker")
+		MAA.dbg("--MAA:cycleAttackAction(): unable to get nodeCT of rAttacker")
 		return
 	end
 
@@ -158,6 +180,17 @@ function cycleAttackAction(iAmt)
 		self.rMob.nAttackAbility = nil
 		MAA.dbg("--MAA:cycleAttackAction(): no powers available")
 		return
+	end
+
+	local rAttackRoll = ActionAttack.getRoll(self.rMob.rAttacker, aPowerActions[1])
+	if rAttackRoll then
+		PowerManager.evalAction(self.rMob.rAttacker, aPowerActions[1], rAttackRoll)
+		MAA.__recurseTable("MAA:cycleAttackAction() PowerManager.evalAction() returned rAttackRoll",rAttackRoll)
+		local rDamageRoll = ActionDamage.getRoll(_, aPowerActions[1])
+		if rDamageRoll then
+			PowerManager.evalAction(self.rMob.rAttacker, aPowerActions[1], rDamageRoll)
+			MAA.__recurseTable("MAA:cycleAttackAction() PowerManager.evalAction() returned rDamageRoll",rDamageRoll)
+		end
 	end
 
 	if #aPowerActions == 1 then
@@ -275,6 +308,7 @@ function updateAll()
 	self.cycleAttackAction()
 	local aTargets = TargetingManager.getFullTargets(self.rMob.rAttacker)
 	if self.rMob.rAttacker == nil or #aTargets ~= 1 or self.rMob.rPower == nil then
+		self.rMob = {}
 		self.showHelp()
 		MAA.dbg("--MAA:updateAll(): failed, tostring(rAttacker)=["..tostring(self.rMob.rAttacker).."] #aTargets=["..#aTargets.."] or rPower=["..tostring(self.rMob.rPower).."]")
 		return
@@ -311,8 +345,16 @@ function addHandlers(hWnd)
 	MAA.dbg("--MAA:addHandlers(): success")
 end
 
-function _really_removeHandlers()
-	MAA.dbg("++MAA:_really_removeHandlers()")
+local function __pendingComplete()
+	local nPending = 0
+	for i,v in pairs(self.pending_rolls) do
+		nPending = nPending + v
+	end
+	return nPending == 0
+end
+
+local function __really_removeHandlers()
+	MAA.dbg("++MAA:__really_removeHandlers()")
 	ActionsManager.unregisterResultHandler(MODNAME.."_damage")
 	ActionsManager.unregisterResultHandler(MODNAME.."_attack")
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.active", "onUpdate", onUpdateActiveCT)
@@ -320,15 +362,15 @@ function _really_removeHandlers()
 	DB.removeHandler(CombatManager.getTrackerPath() .. ".*.targets", "onChildDeleted", onTargetChildDeleted)
 	self.bHandlerRemovalRequested = false
 	sendTokenCommand("resetTokenWidgets")
-	MAA.dbg("--MAA:_really_removeHandlers(): success")
+	MAA.dbg("--MAA:__really_removeHandlers(): success")
 end
 
 function removeHandlers()
 	MAA.dbg("++MAA:removeHandlers()")
-	if self.tResults["pending_attacks"] > 0 or self.tResults["pending_damages"] > 0 then
+	if __pendingComplete() then
 		self.bHandlerRemovalRequested = true
 	else
-		_really_removeHandlers()
+		__really_removeHandlers()
 	end
 	MAA.dbg("--MAA:removeHandlers(): success")
 end
@@ -394,21 +436,6 @@ function hBtn_onRefresh(hCtl,hWnd)
 	MAA.dbg("--MAA:hBtn_onRefresh(): success")
 end
 
-function initRestults()
-	tResults = {}
-	tResults["pending_damages"] = 0
-	tResults["pending_attacks"] = 0
-	tResults["damage"] = 0
-	tResults["mobsize"] = 0
-	tResults["hits"] = 0
-	tResults["miss"] = 0
-	tResults["crit"] = 0
-	tResults["name"] = "*name*"
-	tResults["action"] = "*action*"
-	tResults["victim"] = "*victim*"
-	return tResults
-end
-
 --------------------------------------------------------------------------------
 
 function hToken_openActor(hToken,hWnd)
@@ -432,58 +459,19 @@ end
 
 function hBtn_onRollAttack(hCtl,hWnd)
 	MAA.dbg("++MAA:hBtn_onRollAttack()")
-	local nActiveCT,nTarget,iMobSize = __getAllActors(false)
-	if nActiveCT == nil then
-		MAA.dbg("--MAA:hBtn_onRollAttack(): failed to get all actors")
-		return
-	end
-	local rSource = ActorManager.resolveActor(nActiveCT.getPath())
-	if EffectManager.hasEffect(rSource,"SKIPTURN") then
-		if	self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
-			CombatManager.nextActor()
-		end
-		MAA.dbg("--MAA:hBtn_onRollAttack(): actor has SKIPTURN effect")
-		return
-	end
-	local rTarget = ActorManager.resolveActor(nTarget.getPath())
-	local sAction = self.phWnd["attacker"]["action"].getValue()
-	local _,sRecord = DB.getValue(nActiveCT,"sourcelink","","")
-	MAA.dbg("  MAA:hBtn_onRollAttack() sRecord=["..sRecord.."]")
-	nAttackerDefinition = DB.findNode(sRecord)
-	local sAttackerName = "* Name Unknown *"
-	if nAttackerDefinition ~= nil then
-		sAttackerName = nAttackerDefinition.getChild("name").getValue()
-	else
-		sAttackerName = nActiveCT.getChild("name").getValue()
-	end
-	local nActionList = nActiveCT.getChild("actions")
-	local nodeWeapon = __getActionNode(nActionList,sAction)
-	local rActionList = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
-	local rAction = {}
-	local k,v
-	for k,v in pairs(rActionList["aAbilities"]) do
-		if v.label == sAction and v.sType == "attack" then
-			rAction = v
-			break
-		end
-	end
-	tSkipTurnEffect.nInit = nActiveCT.getChild("initresult").getValue() - 1
-	self.tResults = self.initRestults()
-	self.tResults["pending_damages"] = iMobSize
-	self.tResults["pending_attacks"] = iMobSize
-	self.tResults["mobsize"] = iMobSize
-	self.tResults["name"] = sAttackerName
-	self.tResults["action"] = sAction
-	self.tResults["victim"] = rTarget.sName
+
+	tSkipTurnEffect.nInit = DB.getValue(self.rMob.rAttacker.sCTNode..".initresult",1) - 1
+
 	ActionsManager.lockModifiers()
+	self.pending_rolls["attack"] = #self.rMob.aMob
+	self.pending_rolls["damage"] = #self.rMob.aMob
 	self.bModStackUsed = false
-	local i,sMoberPath
-	for i,sMoberPath in ipairs(self.mobList) do
-		local rAttacker = ActorManager.resolveActor(sMoberPath)
-		local rRoll = ActionAttack.getRoll(rAttacker, rAction)
-		self.bModStackUsed = ActionsManager.applyModifiers(rAttacker, rTarget, rRoll)
-		rRoll.sType = MODNAME.."_attack" -- triggers custom callback
-		ActionsManager.roll(rSource, rTarget, rRoll)
+	local i,rAttacker
+	for i,rAttacker in pairs(self.rMob.aMob) do
+		local rRoll = ActionAttack.getRoll(rAttacker, self.rMob.rPower.aAbilities)
+		self.bModStackUsed = ActionsManager.applyModifiers(rAttacker, self.rMob.rTarget, rRoll)
+		rRoll.sType = __encode_MAA_action(rRoll.sType) -- triggers custom callback
+		ActionsManager.roll(rAttacker, self.rMob.rTarget, rRoll)
 		EffectManager.addEffect("","",rAttacker.sCTNode,tSkipTurnEffect)
 	end
 	MAA.dbg("--MAA:hBtn_onRollAttack(): Success")
@@ -491,19 +479,19 @@ end
 
 function handleAttackThrowResult(rSource, rTarget, rRoll)
 	MAA.dbg("++MAA:handleAttackThrowResult()")
-	rRoll.sType = "attack"
+	rRoll.sType = __decode_MAA_action(rRoll.sType)-- TODO: rewrite a general "strip_MAA" function
 	ActionsManager.resolveAction(rSource, rTarget, rRoll)
 	if rRoll.sResults == "[CRITICAL HIT]" then
-		self.tResults["crit"] = self.tResults["crit"] + 1
+		self.tResults["crit"] = (self.tResults["crit"] or 0) + 1
 		self.submitDamageThrow(rSource,rTarget)
 	elseif rRoll.sResults == "[HIT]" then
-		self.tResults["hits"] = self.tResults["hits"] + 1
+		self.tResults["hits"] = (self.tResults["hits"] or 0) + 1
 		self.submitDamageThrow(rSource,rTarget)
 	else
-		self.tResults["miss"] = self.tResults["miss"] + 1
-		self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
+		self.tResults["miss"] = (self.tResults["miss"] or 0) + 1
+		self.pending_rolls["damage"] = self.pending_rolls["damage"] - 1
 	end
-	self.tResults["pending_attacks"] = self.tResults["pending_attacks"] - 1
+	self.pending_rolls[rRoll.sType] = self.pending_rolls[rRoll.sType] - 1
 	self.finalizeMobAttack()
 	MAA.dbg("--MAA:handleAttackThrowResult(): Success")
 end
@@ -511,30 +499,17 @@ end
 --------------------------------------------------------------------------------
 
 function submitDamageThrow(rSource,rTarget)
-	local nSource = CombatManager.getCTFromNode(rSource.sCTNode);
-	local sAction = self.tResults["action"]
-	local nActionList = nSource.getChild("actions")
-	local nodeWeapon = __getActionNode(nActionList,sAction)
-	local rActionList = CombatManager2.parseAttackLine(DB.getValue(nodeWeapon,"value"));
-	local rAction = {}
-	local k,v
-	for k,v in pairs(rActionList["aAbilities"]) do
-		if v.label == sAction and v.sType == "damage" then
-			rAction = v
-			break
-		end
-	end
-	local rRoll = ActionDamage.getRoll(rSource, rAction)
+	local rRoll = ActionDamage.getRoll(rSource, self.rMob.rPower)
 	ActionsManager.applyModifiers(rAttacker, rTarget, rRoll, true)
-	rRoll.sType = MODNAME.."_damage" -- triggers custom callback, for summary messaging
+	rRoll.sType = __encode_MAA_action(rRoll.sType) -- triggers custom callback, for summary messaging
 	ActionsManager.roll(rSource, rTarget, rRoll)
 end
 
 function handleDamageThrowResult(rSource,rTarget,rRoll)
 	rRoll.sType = "damage"
 	ActionsManager.resolveAction(rSource, rTarget, rRoll)
-	self.tResults["pending_damages"] = self.tResults["pending_damages"] - 1
-	self.tResults["damage"] = self.tResults["damage"] + ActionsManager.total(rRoll)
+	self.pending_rolls[rRoll.sType] = self.pending_rolls[rRoll.sType] - 1
+	self.tResults["damage"] = (self.tResults["damage"] or 0) + ActionsManager.total(rRoll)
 	self.finalizeMobAttack()
 end
 
@@ -574,7 +549,7 @@ function buildAttackMessage()
 	else
 		sConclusion3 = " and "..self.tResults["crit"].." critical hits!!!"
 	end
-	local sChatEntry = "A mob of "..self.tResults["mobsize"].." "..self.tResults["name"].."s attack "..self.tResults["victim"].." with their "..self.tResults["action"].."s."
+	local sChatEntry = "A mob of "..#self.rMob.aMob.." "..self.rMob.rAttacker.name.."s attack "..self.rMob.rTarget.name.." with their "..self.rMob.rPower.name.."s."
 	sChatEntry = sChatEntry .. "  " .. sConclusion1..sConclusion2..sConclusion3
 	MAA.dbg("  MAA:buildAttackMessage() sChatEntry=["..sChatEntry.."]")
 	return buildMessage(sChatEntry)
@@ -582,14 +557,14 @@ end
 
 function buildDamageMessage()
 	local sChatEntry = "No damage was dealt."
-	if self.tResults["miss"] == self.tResults["mobsize"] then
+	if self.tResults["miss"] == #self.rMob.aMob then
 		sChatEntry = "They never stood a chance!"
 	else
 		sChatEntry = "A total of "..self.tResults["damage"].." damage was dealt."
 		if self.tResults["miss"] == 0 then
 			sChatEntry = sChatEntry .. "  It was a brutal attack!"
 		else
-			if self.tResults["crit"] == self.tResults["mobsize"] then
+			if self.tResults["crit"] == #self.rMob.aMob then
 				sChatEntry = sChatEntry .. "  Their victim has been critically injured!"
 			elseif self.tResults["crit"] > 0 then
 				sChatEntry = sChatEntry .. "  It was a particularily viscious attack!"
@@ -600,13 +575,12 @@ function buildDamageMessage()
 end
 
 function finalizeMobAttack()
-	if self.tResults["pending_damages"] + self.tResults["pending_attacks"] == 0 then
+	if __pendingComplete() then
 		ActionsManager.unlockModifiers(self.bModStackUsed)
 		Comm.deliverChatMessage(self.buildAttackMessage())
 		Comm.deliverChatMessage(self.buildDamageMessage())
-		self.tResults = initRestults()
 		self.updateButtonLabel()
-		if self.bHandlerRemovalRequested then self._really_removeHandlers() end
+		if self.bHandlerRemovalRequested then __really_removeHandlers() end
 	end
 end
 
@@ -624,7 +598,6 @@ function onInit()
 		tButton["class"]      = WNDCLASS
 		tButton["sIcon"]      = "button_action_attack"
 		DesktopManager.registerSidebarToolButton(tButton)
-		self.tResults = initRestults()
 		Interface.openWindow(WNDCLASS,WNDDATA)
 	end
 	MAA.dbg("--MAA:onInit(): success")
