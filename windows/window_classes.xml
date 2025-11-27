@@ -9,7 +9,6 @@
 		</sizelimits>
 		<placement>
 			<size width="480" height="410" />
-			<nosave />
 		</placement>
 		<windowmenu>
 			<nolink />
