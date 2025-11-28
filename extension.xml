@@ -11,7 +11,7 @@
 	</properties>
 	<base>
         <string name="MAA_window_title">Mob Attack Automator</string>
-        <string name="MAA_label_button_roll">Mob Attack!!!</string>
+        <string name="MAA_label_btn_mobattack">Mob Attack!!!</string>
         <string name="MAA_label_attacker">Mobbers</string>
         <string name="MAA_label_target">Victim</string>
         <string name="MAA_atk_label">ATK</string>

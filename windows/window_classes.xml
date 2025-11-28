@@ -23,7 +23,7 @@
 			<MAA_subwindow_actor name="target">
 				<class>MAA_target</class>
 			</MAA_subwindow_actor>
-			<MAA_button_roll name="attack_roll" />
+			<MAA_button_roll name="btn_mobattack" />
 			<resize />
 			<subwindow name="instructions">
 				<anchored to="contentanchor">
@@ -71,6 +71,7 @@
 				<anchored>
 					<top parent="atk" anchor="bottom" offset="4"/>
 				</anchored>
+				<datasource>MAA.mobsize</datasource>
 			</MAA_number>
 			<MAA_number_label>
 				<anchored to="qty" />

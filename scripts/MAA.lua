@@ -19,7 +19,7 @@ local tSkipTurnEffect = {
 
 function getInstructions()
 	local sModName = Interface.getString("MAA_window_title")
-	local sBtnName = Interface.getString("MAA_label_button_roll")
+	local sBtnName = Interface.getString("MAA_label_btn_mobattack")
 	local sInstructions = "<p>These instructions will dissapear when the conditions are right.</p>"
 	sInstructions = sInstructions .. "<p>The Combat Tracker must have an NPC as the Active combatant.</p>"
 	sInstructions = sInstructions .. "<p>The NPC must be targetting one creature.  "..sModName.." will count the NPCs that share the same base npc record, have the same initiative, and are also targetting the same target.</p>"
@@ -33,10 +33,10 @@ end
 
 function showHelp(bVisible)
 	if bVisible == nil then bVisible = true end
-	self.WindowPointers["instructions"].setVisible(bVisible)
-	self.WindowPointers["subwindows"]["attacker"].setVisible(not bVisible)
-	self.WindowPointers["subwindows"]["target"].setVisible(not bVisible)
-	self.WindowPointers["button_roll"].setVisible(not bVisible)
+	self.hWnd.instructions.setVisible(bVisible)
+	self.hWnd.attacker.setVisible(not bVisible)
+	self.hWnd.target.setVisible(not bVisible)
+	self.hWnd.btn_mobattack.setVisible(not bVisible)
 	if bVisible then sendTokenCommand("resetTokenWidgets") end
 end
 
@@ -97,22 +97,8 @@ end
 
 function addWindowPointers(hWnd)
 	--MAA.dbg("++MAA:addWindowPointers()")
-	self.WindowPointers = {}
-	self.WindowPointers["instructions"]           = hWnd.instructions
-	self.WindowPointers["button_roll"]            = hWnd.attack_roll
-	self.WindowPointers["subwindows"]             = {}
-	self.WindowPointers["subwindows"]["attacker"] = hWnd.attacker
-	self.WindowPointers["subwindows"]["target"]   = hWnd.target
-	self.WindowPointers["attacker"]               = {}
-	self.WindowPointers["attacker"]["name"]       = hWnd.attacker.subwindow["name"]
-	self.WindowPointers["attacker"]["token"]      = hWnd.attacker.subwindow["token"]
-	self.WindowPointers["attacker"]["atk"]        = hWnd.attacker.subwindow["atk"]
-	self.WindowPointers["attacker"]["qty"]        = hWnd.attacker.subwindow["qty"]
-	self.WindowPointers["attacker"]["action"]     = hWnd.attacker.subwindow["action_cycler"].subwindow["action"]
-	self.WindowPointers["target"]                 = {}
-	self.WindowPointers["target"]["name"]         = hWnd.target.subwindow["name"]
-	self.WindowPointers["target"]["token"]        = hWnd.target.subwindow["token"]
-	self.WindowPointers["target"]["ac"]           = hWnd.target.subwindow["ac"]
+	self.hWnd    = hWnd
+	self.hWndQty = hWnd.attacker.subwindow["qty"]
 	--MAA.dbg("--MAA:addWindowPointers(): success")
 end
 
@@ -210,17 +196,30 @@ end
 --------------------------------------------------------------------------------
 
 function updateButtonLabel(nActiveCT)
-	if type(self.WindowPointers["button_roll"]) ~= "buttoncontrol" then return end
+	if type(self.hWnd.btn_mobattack) ~= "buttoncontrol" then return end
 	if nActiveCT == nil then
 		nActiveCT = CombatManager.getActiveCT()
 	end
 	if nActiveCT and EffectManager.hasEffect(ActorManager.resolveActor(nActiveCT),"SKIPTURN") then
-		self.WindowPointers["button_roll"].setText("Next Actor")
-		self.WindowPointers["button_roll"].setFrame("buttondisabled",2,2,2,2)
+		self.hWnd.btn_mobattack.setText("Next Actor")
+		self.hWnd.btn_mobattack.setFrame("buttondisabled",2,2,2,2)
 	else
-		self.WindowPointers["button_roll"].setText(Interface.getString("MAA_label_button_roll"))
-		self.WindowPointers["button_roll"].setFrame("buttonup",2,2,2,2)
+		self.hWnd.btn_mobattack.setText(Interface.getString("MAA_label_btn_mobattack"))
+		self.hWnd.btn_mobattack.setFrame("buttonup",2,2,2,2)
 	end
+end
+
+local function __setWindowValue(hWnd,_Data)
+	local sWndClass,sOldData = hWnd.getValue()
+	local sDataType = type(_Data)
+	if type(_Data) ~= "string" then
+		if type(_Data) == "databasenode" then
+			_Data = _Data.getPath()
+		else
+			_Data = string(_Data)
+		end
+	end
+	hWnd.setValue(sWndClass,_Data)
 end
 
 function updateAll()
@@ -238,12 +237,9 @@ function updateAll()
 	local sTargetName = DB.getValue(nTarget,"name","sTargetName==nil")
 	local sTargetToken = DB.getValue(nTarget,"token")
 	local iTargetAC = DB.getValue(nTarget,"ac")
-	self.WindowPointers["attacker"]["name"].setValue(sAttackerName)
-	self.WindowPointers["attacker"]["token"].setPrototype(sAttackerToken)
-	self.WindowPointers["attacker"]["qty"].setValue(iMobSize)
-	self.WindowPointers["target"]["name"].setValue(sTargetName)
-	self.WindowPointers["target"]["token"].setPrototype(sTargetToken)
-	self.WindowPointers["target"]["ac"].setValue(iTargetAC)
+	DB.setValue(self.WNDDATA..".mobsize" ,"number",iMobSize)
+	__setWindowValue(self.hWnd.attacker,nActiveCT)
+	__setWindowValue(self.hWnd.target,nTarget)
 	self.updateButtonLabel(nActiveCT)
 	MAA.dbg("--MAA:updateAll(): success")
 	return
@@ -303,7 +299,7 @@ function updateAttackAction(iAmt,nActiveCT)
 	end
 	local nActionList = nActiveCT.getChild("actions")
 	if nActionList == nil then return end
-	local sOldAction = self.WindowPointers["attacker"]["action"].getValue()
+	local sOldAction = self.hWnd.attacker.subwindow.action_cycler.getValue()
 	local iOldAction = __getActionIndex(nActionList,sOldAction)
 	local iActionLen = nActionList.getChildCount()
 	local sAttackBonus = nil
@@ -654,7 +650,12 @@ end
 --------------------------------------------------------------------------------
 function onInit()
 	MAA.dbg("++MAA:onInit()")
-	tSkipTurnEffect.sName = Interface.getString("MAA_label_button_roll").."; SKIPTURN"
+	
+	DB.setValue(self.WNDDATA..".mobsize" ,"number",0)
+	DB.setValue(self.WNDDATA..".attacker","name","string","Unnamed Mobber")
+	DB.setValue(self.WNDDATA..".target"  ,"name","string","Unnamed Victim")
+
+	tSkipTurnEffect.sName = Interface.getString("MAA_label_btn_mobattack").."; SKIPTURN"
 	self.initOOB()
 	if Session.IsHost then
 		local tButton = {}

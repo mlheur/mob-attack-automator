@@ -11,6 +11,13 @@
 				<left parent="contentanchor" anchor="left" />
 				<right parent="contentanchor" anchor="right" />
 			</anchored>
+			<script>
+				function onInit()
+					local sWndClass,sDataSource = getValue()
+					local sWndName = getName()
+					setValue(sWndClass,sDataSource.."."..sWndName)
+				end
+			</script>
 		</subwindow>
 	</template>
 
@@ -59,7 +66,7 @@
 	</template>
 
 	<template name="MAA_portrait">
-		<tokencontrol name="token">
+		<tokenfield name="token">
 			<activate />
 			<fastinit />
 			<nodrag /><nodrop />
@@ -73,13 +80,13 @@
 					MAA.hToken_openActor(self,window)
 				end
 			</script>
-		</tokencontrol>
+		</tokenfield>
 	</template>
 
 	<template name="MAA_name">
-		<stringcontrol name="name">
+		<stringfield name="name">
 			<activate />
-			<fastinit />
+			<readonly />
 			<controlline />
 			<font>charsheet_header</font>
 			<nodrag /><nodrop />
@@ -88,11 +95,11 @@
 				<left anchor="right" offset="4" />
 				<right parent="refresh" offset="2" />
 			</anchored>
-		</stringcontrol>
+		</stringfield>
 	</template>
 
 	<template name="MAA_number">
-		<basicnumberc>
+		<basicnumber>
 			<activate />
 			<readonly />
 			<fastinit />
@@ -101,7 +108,7 @@
 				<right parent="inneranchor" />
 				<size height="20" width="36" />
 			</anchored>
-		</basicnumberc>
+		</basicnumber>
 	</template>
 
 	<template name="MAA_number_label">
@@ -121,7 +128,7 @@
 		<button_text_sm>
 			<activate />
 			<fastinit />
-			<state textres="MAA_label_button_roll" />
+			<state textres="MAA_label_btn_mobattack" />
 			<font>button-white</font>
 			<stateframe>
 				<disabled name="buttondisabled" offset="2,2,2,2" nobaseframe="true" />
@@ -151,7 +158,7 @@
 				<left anchor="right" offset="12" />
 				<right parent="contentanchor" offset="-84" />
 			</anchored>
-			<class>MAA_action_cycler</class>
+			<class>ct_section_active_vehicle_component_action</class>
 		</subwindow>
 	</template>
 
