@@ -333,26 +333,8 @@ function onMobDamageRoll(rSource,rTarget,rRoll)
 			local rMobRoll = UtilityManager.copyDeep(rRoll)
 			ActionDamage.modDamage(rMobber, self.rVictim, rMobRoll)
 			ActionsManager.roll(rMobber, self.rVictim, rMobRoll)
-
-			MobManager.dump("MobActionsManager:onMobDamageRoll() dump rPower", rPower)
-			if (
-				rPower.aAbilities
-				and #rPower.aAbilities >= 4
-				and rPower.aAbilities[1].sType == "attack"
-				and rPower.aAbilities[2].sType == "damage"
-				and rPower.aAbilities[3].sType == "powersave"
-				and rPower.aAbilities[4].sType == "damage"
-			) then
-				nFollowupActions = nFollowupActions + 1
-			end
 		end
 	end
-
-	if nFollowupActions > 0 and self.hasPendingRoll(rPower.name,rRoll.iMobAttackID,"save") == 0 then
-		self.addPendingRolls(rPower.name,rRoll.iMobAttackID,"save",nFollowupActions)
-		self.addPendingRolls(rPower.name,rRoll.iMobAttackID,"damage",nFollowupActions)
-	end
-
 	rRoll.bInterceptDestroy = true
 	rRoll.aDice = {}
 	MobManager.dbg("--MobActionsManager:onMobDamageRoll(): normal exit ::: Return to game engine")
