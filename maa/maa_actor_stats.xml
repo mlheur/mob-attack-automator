@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root>
+
+	<template name="maa_actor_stat_ac">
+		<numberfield name="ac">
+			<font name="sheetnumber" />
+			<anchored width="35" height="40">
+				<top offset="7"/>
+				<left parent="leftanchor" relation="relative" offset="5" postoffset="7" />
+			</anchored>
+			<frame name="acicon" offset="0,0,0,4" />
+		</numberfield>
+	</template>
+
+	<template name="maa_actor_stat_label">
+		<stringcontrol>
+			<activate /><nodrag /><nodrop />
+			<readonly/><right />
+			<font name="sheetlabel" />
+			<anchored width="28" height="35">
+				<top offset="9"/>
+				<left parent="leftanchor" relation="relative" />
+			</anchored>
+			<script>
+				function onInit()
+					local sName = self.getName()
+					sName = string.sub(sName,7,string.len(sName))
+					local sLabel = Interface.getString(sName)
+					MobManager.dbg("+-maa_actor_stat_label:onInit() sName=["..sName.."] sLabel=["..sLabel.."]")
+					self.setValue(sLabel)
+				end
+			</script>
+		</stringcontrol>
+	</template>
+
+	<template name="maa_actor_stat_value">
+		<numberfield>
+			<activate /><nodrag /><nodrop />
+			<readonly/>
+			<font name="sheetnumber" />
+			<frame name="fieldlight" />
+			<anchored width="50" height="35">
+				<top offset="9"/>
+				<left parent="leftanchor" relation="relative" postoffset="-5" />
+			</anchored>
+		</numberfield>
+	</template>
+
+	<template name="maa_anchor_insideleft">
+		<genericcontrol name="leftanchor">
+			<anchored offset="0,0" width="0">
+				<top /><bottom />
+				<left />				
+			</anchored>
+			<disabled />
+		</genericcontrol>
+	</template>
+
+	<template name="maa_stats_subwindow">
+		<maa_actor_subwindow name="victim_stats" merge="join">
+            <class>maa_stats_subwindow</class>
+			<anchored to="victim" />
+		</maa_actor_subwindow>
+	</template>
+    <windowclass name="maa_stats_subwindow" copy="maa_actor_subwindow_base" merge="join">
+		<sheetdata>
+			<maa_anchor_insideleft />
+			<maa_actor_stat_label  name="label_ac" />
+			<maa_actor_stat_ac     name="ac" />
+			<maa_actor_stat_label  name="label_ct_label_wounds" />
+			<maa_actor_stat_value  name="wounds" datasource=".hp.wounds">
+				<script file="maa/scripts/maa_actor_wounds.lua" />
+			</maa_actor_stat_value>
+			<maa_actor_stat_label  name="label_hp" />
+			<maa_actor_stat_value  name="hptotal" />
+			<maa_actor_effects     name="effects" />
+		</sheetdata>
+    </windowclass>
+
+</root>

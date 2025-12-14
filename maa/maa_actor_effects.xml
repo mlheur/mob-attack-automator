@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root>
+
+	<template name="maa_actor_effects">
+		<stringcontrol name="effects">
+			<activate /><nodrag /><nodrop />
+			<multilinespacing>16</multilinespacing>
+			<font>sheettext</font>
+			<controlline />
+			<anchored>
+				<top offset="4"/>
+				<bottom />
+				<left parent="leftanchor" relation="relative" offset="4" />
+				<right parent="" offset="-3" />
+			</anchored>
+			<script file="maa/scripts/maa_actor_effects.lua" />
+		</stringcontrol>
+	</template>
+
+</root>

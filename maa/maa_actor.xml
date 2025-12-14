@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root>
+
+	<template name="maa_actor_details">
+		<subwindow name="actor_details">
+			<activate /><nodrag /><nodrop />
+			<class>maa_actor_details</class>
+			<anchored to="label" height="100">
+				<left offset="-2"/><right />
+				<top anchor="bottom" />
+			</anchored>
+		</subwindow>
+	</template>
+	<windowclass name="maa_actor_details">
+		<sheetdata>
+			<anchor_content_top />
+			<maa_actor_token />
+			<maa_actor_name />
+		</sheetdata>
+	</windowclass>
+
+	<template name="maa_actor">
+		<subwindow>
+			<activate /><nodrag /><nodrop />
+			<class>maa_actor</class>
+			<anchored to="contentanchor" height="130">
+				<left offset="-2" /><right offset="2" />
+				<top relation="relative" offset="1" />
+			</anchored>
+		</subwindow>
+	</template>
+	<windowclass name="maa_actor">
+		<frame name="ctentrybox" />
+		<sheetdata>
+			<anchor_content_top />
+			<maa_actor_label />
+			<maa_actor_details />
+		</sheetdata>
+		<script file="maa/scripts/maa_actor.lua" />
+	</windowclass>
+
+</root>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root>
+
+	<template name="maa_power_cycler_button">
+		<buttoncontrol>
+			<activate /><nodrag /><nodrop />
+			<state frame="buttonup" />
+			<pressed frame="buttondown" offset="1,1" />
+			<anchored to="contentanchor" width="32"><top/><bottom/></anchored>
+			<script file="maa/scripts/maa_power_cycler_button.lua" />
+		</buttoncontrol>
+	</template>
+
+	<template name="maa_power_value_text">
+		<stringfield name="value">
+			<activate /><nodrag /><nodrop />
+			<actorpath>....</actorpath>
+			<multilinespacing>16</multilinespacing>
+			<font>sheettext</font>
+			<controlline />
+			<script file="ct/scripts/ct_power.lua" />
+			<anchored to="" position="over" />
+		</stringfield>
+	</template>
+
+	<template name="maa_power_desc_text">
+		<stringfield name="desc">
+			<hidden /><nodrag /><nodrop />
+			<actorpath>....</actorpath>
+			<multilinespacing>16</multilinespacing>
+			<font>sheettext</font>
+			<controlline />
+			<script file="ct/scripts/ct_power.lua" />
+			<anchored to="" position="over" />
+		</stringfield>
+	</template>
+
+	<template name="maa_power_value">
+		<subwindow name="power_value">
+			<activate /><nodrag /><nodrop />
+			<class>maa_power_value</class>
+			<anchored>
+				<top parent="prev" offset="4" />
+				<bottom parent="prev" />
+				<left parent="prev" anchor="right" offset="1" />
+				<right parent="next" anchor="left" offset="-1" />
+            </anchored>
+		</subwindow>
+	</template>
+	<windowclass name="maa_power_value">
+		<sheetdata>
+			<maa_power_value_text />
+			<maa_power_desc_text />
+		</sheetdata>
+	</windowclass>
+
+	<template name="maa_power_subwindow">
+        <maa_actor_subwindow name="power" merge="join">
+            <class>maa_power_subwindow</class>
+			<anchored to="mobber" />
+        </maa_actor_subwindow>
+	</template>
+    <windowclass name="maa_power_subwindow" copy="maa_actor_subwindow_base" merge="join">
+		<sheetdata>
+			<maa_full_anchor />
+			<maa_power_cycler_button name="next">
+				<anchored><right/></anchored>
+			</maa_power_cycler_button>
+			<maa_power_cycler_button name="prev">
+				<anchored><left/></anchored>
+			</maa_power_cycler_button>
+			<maa_power_value />
+		</sheetdata>
+		<script file="maa/scripts/maa_power.lua" />
+    </windowclass>
+
+</root>

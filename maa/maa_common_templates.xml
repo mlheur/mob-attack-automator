@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root>
+
+	<template name="maa_full_anchor">
+		<genericcontrol name="contentanchor">
+			<anchored to=""><top/><bottom/><left/><right/></anchored>
+		</genericcontrol>
+	</template>
+
+	<template name="maa_actor_subwindow">
+		<subwindow>
+			<activate /><nodrag /><nodrop />
+			<anchored position="insidetopright" height="57">
+				<left offset="112" />
+				<right offset="-5" />
+				<top offset="28" />
+			</anchored>
+		</subwindow>
+	</template>
+	<windowclass name="maa_actor_subwindow_base">
+		<margins control="2,2,2,2" />
+		<frame name="fieldfocus" />
+		<sheetdata>
+			<maa_full_anchor />
+		</sheetdata>
+	</windowclass>
+
+	<template name="maa_actor_label">
+		<stringcontrol name="label">
+			<activate /><nodrag /><nodrop />
+			<center />
+			<font>subwindowsmalltitle</font>
+			<frame name="metalplate" offset="2,2,2,2" />
+			<anchored to="contentanchor" height="20">
+				<top offset="7"/>
+				<left offset="18" />
+				<right offset="-6"/>
+			</anchored>
+		</stringcontrol>
+	</template>
+
+	<template name="maa_actor_name">
+		<stringfield name="name">
+<!--		<frame name="mini_name" offset="4,4,4,0" />  -->
+			<activate /><nodrag /><nodrop /><controlline />
+			<font>charsheet_header</font>
+			<empty>maa_actor_name</empty>
+			<anchored to="token" height="32" >
+				<left anchor="right" offset="6" />
+				<right parent="contentanchor" offset="-5" />
+				<bottom offset="-2" />
+			</anchored>
+		</stringfield>
+	</template>
+
+	<template name="maa_actor_token">
+		<tokenfield name="token">
+			<activate /><nodrag /><nodrop />
+			<frame name="image_token_detail" />
+			<empty>token_empty</empty>
+			<anchored to="contentanchor" height="96" width="96">
+				<left />
+				<top anchor="bottom" offset="1" />
+			</anchored>
+		</tokenfield>
+	</template>
+
+</root>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root>
+
+	<template name="maa_help_scrollbar" >
+		<scrollbar name="help_scrollbar">
+			<anchored to="help" />
+			<target name="help"/>
+		</scrollbar>
+	</template>
+
+	<template name="maa_help">
+		<formattedtextcontrol name="help">
+			<hidden /><nodrag /><nodrop />
+			<frame name="groupbox" margins="20,20,20,20" />
+			<font simple="sheettext" normal="reference-r" bold="reference-b" italic="reference-i" bolditalic="reference-bi" title="reference-h" />
+			<color>FFFFFFFF</color>
+			<anchored to="contentanchor" position="below">
+				<bottom offset="-18" anchor="top" parent="bottomanchor" />
+				<left offset="20" />
+				<right offset="-20" />
+				<top offset="20" />
+			</anchored>
+			<script>
+				function onInit()
+					setValue(MobManager.getInstructions())
+				end
+			</script>
+		</formattedtextcontrol>
+	</template>
+
+</root>
