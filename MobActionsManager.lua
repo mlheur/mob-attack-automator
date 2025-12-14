@@ -183,14 +183,18 @@ function deductPendingRoll(sPowerName,iMobAttackID,sRollType)
 end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+local function __sendChatMessage(sMsg)
+	Comm.deliverChatMessage({
+		text = sMsg,
+		mode = "story"
+	})
+end
+--------------------------------------------------------------------------------
 function reportMobAttackStarting()
 	local sResultMsg = self.sMobberName
 	sResultMsg = sResultMsg .. " has incited a mob attack against "
 	sResultMsg = sResultMsg .. self.sVictimName
-	Comm.deliverChatMessage({
-		text = sResultMsg,
-		mode = "story"
-	})
+	__sendChatMessage(sResultMsg)
 end
 --------------------------------------------------------------------------------
 function onMobAttackRoll(rSource, rTarget, rRoll)
@@ -261,26 +265,16 @@ function reportMobAttackInProgress(rRoll,sMobberPath)
 	end
 	sResultMsg = string.sub(sResultMsg, 1, sResultMsg:len()-2)
 	sResultMsg = sResultMsg .. "."
-
-	Comm.deliverChatMessage({
-		text = sResultMsg,
-		mode = "story"
-	})
+	__sendChatMessage(sResultMsg)
 	MobManager.dbg("--MobActionsManager:reportMobAttackInProgress(): normal exit")
 end
 --------------------------------------------------------------------------------
-function reportMobAttackComplete()
+function reportMobAttackComplete(rRoll)
 	local sResultMsg = ""
-	if MobLedger.iTotal > 0 then
-		sResultMsg = sResultMsg .. "A total of " .. MobLedger.iTotal .. " damage was dealt.  "
-		MobLedger.iTotal = 0
-	else
-		sResultMsg = sResultMsg .. "No damage was dealt.  "
-	end
-	Comm.deliverChatMessage({
-		text = sResultMsg,
-		mode = "story"
-	})
+	local iTotal = MobLedger.getTotal(rRoll)
+	if iTotal > 0 then sResultMsg = sResultMsg .. "A total of " .. iTotal .. " damage was dealt.  "
+	else sResultMsg = sResultMsg .. "No damage was dealt.  " end
+	__sendChatMessage(sResultMsg)
 end
 --------------------------------------------------------------------------------
 function onMobAttackResult(rSource, rTarget, rRoll)
@@ -376,7 +370,7 @@ function onMobDamageResult(rSource,rTarget,rRoll)
 			MobLedger.updateEntry(rRoll, rSource.sCTNode, rRoll.nTotal)
 			self.deductPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage")
 			if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
-				self.reportMobAttackComplete()
+				self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
 			end
 		end
 	end
@@ -479,15 +473,18 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 			rRoll.sResults == "[SUCCESS]"
 			and
 			rRoll.sSaveDesc:match("%[HALF ON SAVE%]") == nil
+			-- ToDo: this is where, if the victim has evasion or (??) then damage is nullified
 		) then
 			self.deductPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage")
+		else
+			MobLedger.addEntry(rRoll, rMobber.sCTNode)
 		end
 	end
 
 	if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"save") or 0) == 0 then
 		self.reportMobAttackInProgress(rRoll,rMobber.sCTNode)
 		if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
-			self.reportMobAttackComplete()
+			self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
 		end
 	end
 
