@@ -63,7 +63,6 @@ function findAttackID(rRoll,sCTNode)
 	if self._hitTracker[rRoll.sPowerName] then
 		for iMobAttackID,tMobAttackID in pairs(self._hitTracker[rRoll.sPowerName]) do
 			MobManager.dbg("MobHitTracker:findAttackID() iMobAttackID=["..iMobAttackID.."]")
-			iMobAttackID = tonumber(iMobAttackID)
 			if sCTNode == nil then
 				for sMobberPath,sResults in pairs(tMobAttackID) do
 					MobManager.dbg("MobHitTracker:findAttackID() sMobberPath=["..sMobberPath.."], sResults=["..sResults.."]")
