@@ -2,7 +2,7 @@
 <root version="3.0" release="1">
 	<announcement text="Mob Attack Automator (C) 2025 mlheur@gmail.com" font="emotefont" icon="maa_icon" />
 	<properties>
-		<name>mob-attack-automator-v2</name>
+		<name>mob-attack-automator</name>
 		<version>2</version>
 		<author>mlheur</author>
 		<description>Automate mobs of critters, or squads of archers, all attacking a single target.</description>
