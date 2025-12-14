@@ -9,8 +9,10 @@ function addEntry(rRoll,sMobberPath)
 	local sPowerName = rRoll.sPowerName
 	local iMobAttackID = rRoll.iMobAttackID
 	MobManager.dbg("++MobLedger:addEntry(sPowerName=["..sPowerName.."],iMobAttackID=["..iMobAttackID.."],sMobberPath=["..sMobberPath.."])")
-	self._mobLedger[sPowerName]                            = self._mobLedger[sPowerName] or {}
-	self._mobLedger[sPowerName][iMobAttackID]              = self._mobLedger[sPowerName][iMobAttackID] or {}
+	self._mobLedger[sPowerName]               = self._mobLedger[sPowerName] or {}
+	self._mobLedger[sPowerName][iMobAttackID] = self._mobLedger[sPowerName][iMobAttackID] or {}
+	self._iTotals[sPowerName]                 = self._iTotals[sPowerName] or {}
+	self._iTotals[sPowerName][iMobAttackID]   = 0
 	if (self._mobLedger[sPowerName][iMobAttackID][sMobberPath] or 0 ) == 0 then
 		self._mobLedger[sPowerName][iMobAttackID][sMobberPath] = 1
 	else
