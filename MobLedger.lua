@@ -1,5 +1,5 @@
 function reset()
-	self.iTotal = 0
+	self._iTotals = {}
 	self._mobLedger = {}
 end
 
@@ -38,7 +38,7 @@ end
 function updateEntry(rRoll,sMobberPath,iDamage)
 	local sPowerName = rRoll.sPowerName
 	local iMobAttackID = rRoll.iMobAttackID
-	MobManager.dbg("++MobLedger:updateEntry(sPowerName=["..sPowerName.."],iMobAttackID=["..iMobAttackID.."],sMobberPath=["..sMobberPath.."], iDamage=["..iDamage.."])")
+	MobManager.dbg("++MobLedger:updateEntry(sPowerName=["..sPowerName.."],iMobAttackID=["..iMobAttackID.."],sMobberPath=["..sMobberPath.."],iDamage=["..iDamage.."])")
 	self.dump("MobLedger:updateEntry() starting")
 	if (
 		self._mobLedger
@@ -50,9 +50,32 @@ function updateEntry(rRoll,sMobberPath,iDamage)
 		if self._mobLedger[sPowerName][iMobAttackID][sMobberPath] == 0 then
 			self._mobLedger[sPowerName][iMobAttackID][sMobberPath] = nil
 			MobManager.dbg("MobLedger:updateEntry() updating total")
-			self.iTotal = self.iTotal + iDamage
+			self._iTotals[sPowerName][iMobAttackID] = self._iTotals[sPowerName][iMobAttackID] + iDamage
 		end
 	end
 	self.dump("MobLedger:updateEntry() leaving")
 	MobManager.dbg("--MobLedger:updateEntry(): normal exit")
+end
+
+function getTotal(rRoll)
+	local sPowerName = rRoll.sPowerName
+	local iMobAttackID = rRoll.iMobAttackID
+	MobManager.dbg("++MobLedger:getTotal(sPowerName=["..sPowerName.."],iMobAttackID=["..iMobAttackID.."])")
+	local iTotal = 0
+	if (self._iTotals and self._iTotals[sPowerName]) then
+		iTotal = self._iTotals[sPowerName][iMobAttackID]
+		self._iTotals[sPowerName][iMobAttackID] = {}
+		self._mobLedger[sPowerName][iMobAttackID] = {}
+		for _,VAR in ipairs({"_iTotals","_mobLedger"}) do
+			local bCanDelete = true
+			for _ in ipairs(self[VAR][sPowerName]) do
+				bCanDelete = false
+				break
+			end
+			if bCanDelete then self[VAR][sPowerName] = nil end
+		end
+	end
+	MobManager.dbg("MobLedger:getTotal() iTotal=["..iTotal.."]")
+	MobManager.dbg("--MobLedger:getTotal(): normal exit")
+	return iTotal
 end
