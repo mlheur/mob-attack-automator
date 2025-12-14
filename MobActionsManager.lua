@@ -296,7 +296,7 @@ function onMobAttackResult(rSource, rTarget, rRoll)
 			if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"attack") or 0) == 0 then
 				self.reportMobAttackInProgress(rRoll,rSource.sCTNode)
 				if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
-					self.reportMobAttackComplete()
+					self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
 				end
 			end
 		end
