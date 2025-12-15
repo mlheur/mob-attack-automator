@@ -77,34 +77,43 @@ end
 
 function getSequencer(rMobber,rVictim,rPower)
 	if self._gateNumber and self.rPower and self.rMobber and self.rVictim then return self.gateManager end
-	MobManager.dbg("++MobSequencer:getSequencer(rPower=["..rPower.name.."])")
-	local bCanAutomate = false
-	if rPower and rPower.aAbilities then
-		if #rPower.aAbilities == 2
-		and (
-			   rPower.aAbilities[1].sType == "attack"
-			or rPower.aAbilities[1].sType == "powersave"
-		)
-		and rPower.aAbilities[2].sType == "damage"
-		then
-			bCanAutomate = true
-		elseif #rPower.aAbilities == 4
-		and rPower.aAbilities[1].sType == "attack"
-		and rPower.aAbilities[2].sType == "damage"
-		and rPower.aAbilities[3].sType == "powersave"
-		and rPower.aAbilities[4].sType == "damage"
-		then
-			bCanAutomate = true
+	if rMobber and rVictim and rPower then
+		MobManager.dbg("++MobSequencer:getSequencer(rPower=["..rPower.name.."])")
+		local bCanAutomate = false
+		if rPower and rPower.aAbilities then
+			if #rPower.aAbilities == 2
+			and (
+				   rPower.aAbilities[1].sType == "attack"
+				or rPower.aAbilities[1].sType == "powersave"
+			)
+			and rPower.aAbilities[2].sType == "damage"
+			then
+				bCanAutomate = true
+			elseif #rPower.aAbilities == 3
+			and rPower.aAbilities[1].sType == "powersave"
+			and rPower.aAbilities[2].sType == "damage"
+			and rPower.aAbilities[3].sType == "usage"
+			then
+				bCanAutomate = true
+			elseif #rPower.aAbilities == 4
+			and rPower.aAbilities[1].sType == "attack"
+			and rPower.aAbilities[2].sType == "damage"
+			and rPower.aAbilities[3].sType == "powersave"
+			and rPower.aAbilities[4].sType == "damage"
+			then
+				bCanAutomate = true
+			end
 		end
+		if bCanAutomate then
+			self._gateNumber = 1
+			self.rMobber = rMobber
+			self.rVictim = rVictim
+			self.rPower  = rPower
+			MobManager.dbg("--MobSequencer:getSequencer(): startingGate exit")
+			return self.startingGate
+		end
+		self.reset()
+		MobActionsManager.aMob = UtilityManager.copyDeep(MobActionsManager.aMob_shadow)
+		MobManager.dbg("--MobSequencer:getSequencer(): nil exit")
 	end
-	if bCanAutomate then
-		self.rMobber = rMobber
-		self.rVictim = rVictim
-		self.rPower  = rPower
-		MobManager.dbg("--MobSequencer:getSequencer(): startingGate exit")
-		return self.startingGate
-	end
-	self.reset()
-	MobActionsManager.aMob = UtilityManager.copyDeep(MobActionsManager.aMob_shadow)
-	MobManager.dbg("--MobSequencer:getSequencer(): nil exit")
 end
