@@ -33,7 +33,10 @@ end
 function applyEffect(iAbility)
 	for _ in ipairs(self._fails) do
 		local rEffect = self.rPower.aAbilities[iAbility]
-		EffectManager.addEffect("", "", DB.findNode(self.rVictim.sCTNode), rEffect, true)
+		if not EffectManager.hasEffect(self.rVictim, rEffect.sName) then
+			--EffectManager.removeEffect(self.rVictim, rEffect.sName)
+			EffectManager.addEffect("", "", DB.findNode(self.rVictim.sCTNode), rEffect, true)
+		end
 		return
 	end
 end
