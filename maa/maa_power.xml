@@ -24,15 +24,14 @@
 	</template>
 
 	<template name="maa_power_desc_text">
-		<stringfield name="desc">
+		<stringcontrol name="desc">
 			<hidden /><nodrag /><nodrop />
 			<actorpath>....</actorpath>
 			<multilinespacing>16</multilinespacing>
 			<font>sheettext</font>
 			<controlline />
-			<script file="ct/scripts/ct_power.lua" />
 			<anchored to="" position="over" />
-		</stringfield>
+		</stringcontrol>
 	</template>
 
 	<template name="maa_power_value">

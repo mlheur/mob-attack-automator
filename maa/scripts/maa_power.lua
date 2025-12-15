@@ -7,8 +7,17 @@ function onValueChanged(iNewAction)
 		local sClass,sOldData = power_value.getValue()
 		power_value.setValue(sClass,sNewData)
 		local bShowDesc = false
-		if power_value.subwindow["value"].getValue() == "Multiattack" then
+		local sPowerValue = power_value.subwindow["value"].getValue()
+		if (
+			sPowerValue == "Multiattack"
+			or
+			sPowerValue == "Options"
+			or
+			sPowerValue == "Detect"
+		) then
 			bShowDesc = true
+			local sPowerDesc = DB.getValue(sNewData..".desc")
+			power_value.subwindow["desc"].setValue(sPowerValue..": "..sPowerDesc)
 		end
 		power_value.subwindow["value"].setVisible(not bShowDesc)
 		power_value.subwindow["desc"].setVisible(bShowDesc)
