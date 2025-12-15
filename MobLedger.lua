@@ -66,16 +66,8 @@ function getTotal(rRoll)
 	local iTotal = 0
 	if (self._iTotals and self._iTotals[sPowerName]) then
 		iTotal = self._iTotals[sPowerName][iMobAttackID] or 0
-		self._iTotals[sPowerName][iMobAttackID] = {}
+		self._iTotals[sPowerName][iMobAttackID] = 0
 		self._mobLedger[sPowerName][iMobAttackID] = {}
-		for i,VAR in ipairs({"_iTotals","_mobLedger"}) do
-			local bCanDelete = true
-			for _ in ipairs(self[VAR][sPowerName]) do
-				bCanDelete = false
-				break
-			end
-			if bCanDelete then table.remove(self[VAR],i) end
-		end
 	end
 	MobManager.dbg("MobLedger:getTotal() iTotal=["..iTotal.."]")
 	MobManager.dbg("--MobLedger:getTotal(): normal exit")
