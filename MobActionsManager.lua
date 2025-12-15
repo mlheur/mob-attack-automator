@@ -1,6 +1,6 @@
--- Bug: Spell names appears as "" in reportMobAttackInProgress
 -- ToDo: after effect save, reportMobAttackInProgress success vs fail with effect name
 -- ToDo: panther and poisonous snakes want remove on miss; when to reapply targetting?
+-- ToDo: recharge all dragons after mob-firebreath attack ????  low priority
 --------------------------------------------------------------------------------
 --  ACTION FLOW
 --
@@ -31,18 +31,19 @@ local function __resolvePower(sRollDesc,sMobberPath)
 		"innatespells",
 		"spells",
 	}
-	local sRolledPower = StringManager.sanitize(sRollDesc:gsub("%[[^%]]*%]",""))
+	local sRolledPower = StringManager.simplify(StringManager.sanitize(sRollDesc:gsub("%[[^%]]*%]","")))
 	MobManager.dbg("MobActionsManager:__resolvePower() sRolledPower=["..sRolledPower.."]")
 	for i,sPowerType in ipairs(aPowerTypes) do
 		MobManager.dbg("MobActionsManager:__resolvePower() checking sPowerType=["..sPowerType.."]")
 		for j,nPower in ipairs(DB.getChildList(sMobberPath.."."..sPowerType) ) do
 			local sPowerName = StringManager.sanitize(DB.getValue(nPower,"name",""))
 			if sPowerType == "spells" then
-				local iBegin,iEnd = string.find(sPowerName," - ")
+				MobManager.dbg("MobActionsManager:__resolvePower() sPowerName=["..sPowerName.."] before stripping the spell level")
+				local iBegin,iEnd = string.find(sPowerName," - ", 1, true)
 				sPowerName = string.sub(sPowerName, 1, (iBegin - 1))
 			end
 			MobManager.dbg("MobActionsManager:__resolvePower() sPowerName=["..sPowerName.."]")
-			if sPowerName == sRolledPower then
+			if StringManager.simplify(StringManager.sanitize(sPowerName)) == sRolledPower then
 				local sPowerLine = DB.getValue(nPower,"value","")
 				MobManager.dbg("MobActionsManager:__resolvePower() sPowerLine=["..sPowerLine.."]")
 				MobManager.dbg("--MobActionsManager:__resolvePower(): good exit")
@@ -89,6 +90,7 @@ function invalidate()
 	self.rMobber              = nil
 	self.rVictim              = nil
 	self.aMob                 = nil
+	self.aMob_shadow          = nil
 	self.sMobberName          = nil
 	self.sVictimName          = nil
 
@@ -104,6 +106,7 @@ function setData(rMobber,rVictim,aMob)
 	self.rMobber              = rMobber
 	self.rVictim              = rVictim
 	self.aMob                 = UtilityManager.copyDeep(aMob)
+	self.aMob_shadow          = UtilityManager.copyDeep(aMob)
 	self.sMobberName          = ActorManager.getDisplayName(rMobber)
 	self.sVictimName          = ActorManager.getDisplayName(rVictim)
 
@@ -116,6 +119,7 @@ function setData(rMobber,rVictim,aMob)
 
 	MobLedger.reset()
 	MobHitTracker.reset()
+	MobSequencer.reset()
 	self._pendingRolls        = {}
 
 	self.registerHandlers()
@@ -209,6 +213,8 @@ function onMobAttackRoll(rSource, rTarget, rRoll)
 		return
 	end
 	local rPower = __resolvePower(rRoll.sDesc, rSource.sCTNode)
+	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower)
+	if seqFn == MobSequencer.startingGate then seqFn() end
 
 	-- The "primary key" for an individual mob attack is:
 	--- [rPower.name][rRoll.iMobAttackID];
@@ -226,6 +232,7 @@ function onMobAttackRoll(rSource, rTarget, rRoll)
 	self.addPendingRolls(rPower.name,rRoll.iMobAttackID,"damage",#self.aMob)
 	rRoll.bMobAttack = true
 	rRoll.bSecret = false
+	rRoll.bRemoveOnMiss = false
 	local bUnlock
 	ActionsManager.lockModifiers()
 	for i,rMobber in ipairs(self.aMob) do
@@ -292,11 +299,15 @@ function onMobAttackResult(rSource, rTarget, rRoll)
 				MobLedger.addEntry(rRoll, rSource.sCTNode)
 			else
 				self.deductPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage")
+				MobSequencer.informMiss(rSource)
 			end
 			if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"attack") or 0) == 0 then
 				self.reportMobAttackInProgress(rRoll,rSource.sCTNode)
 				if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 					self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
+				else
+					local seqFn = MobSequencer.getSequencer()
+					if seqFn then seqFn() end
 				end
 			end
 		end
@@ -325,6 +336,7 @@ function onMobDamageRoll(rSource,rTarget,rRoll)
 	end
 	rRoll.bMobDamage = true
 	rRoll.bSecret = false
+	rRoll.bRemoveOnMiss = false
 	local nFollowupActions = 0
 	for i,rMobber in ipairs(self.aMob) do
 		MobManager.dbg("MobActionsManager:onMobDamageRoll() checking if rMobber["..rMobber.sCTNode.."] is in the ledger")
@@ -353,6 +365,8 @@ function onMobDamageResult(rSource,rTarget,rRoll)
 			self.deductPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage")
 			if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 				self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
+				local seqFn = MobSequencer.getSequencer()
+				if seqFn then seqFn() end
 			end
 		end
 	end
@@ -372,6 +386,8 @@ function onMobPowersaveRoll(rSource,rTarget,rRoll)
 		return
 	end
 	local rPower = __resolvePower(rRoll.sDesc, rSource.sCTNode)
+	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower)
+	if seqFn == MobSequencer.startingGate then seqFn() end
 
 	rRoll.iMobAttackID = MobHitTracker.startTrackingHits(rPower.name, self.aMob)
 	self.reportMobAttackStarting()
@@ -382,6 +398,7 @@ function onMobPowersaveRoll(rSource,rTarget,rRoll)
 	end
 	rRoll.bMobSave = true
 	rRoll.bSecret = false
+	rRoll.bRemoveOnMiss = false
 	local bUnlock
 	ActionsManager.lockModifiers()
 	for i,rMobber in ipairs(self.aMob) do
@@ -467,6 +484,9 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 		self.reportMobAttackInProgress(rRoll,rMobber.sCTNode)
 		if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 			self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
+		else
+			local seqFn = MobSequencer.getSequencer()
+			if seqFn then seqFn() end
 		end
 	end
 

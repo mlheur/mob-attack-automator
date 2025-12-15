@@ -22,6 +22,7 @@
 		<script name="MobLedger" file="MobLedger.lua" />
 		<script name="MobHitTracker" file="MobHitTracker.lua" />
 		<script name="MobActionsManager" file="MobActionsManager.lua" />
+		<script name="MobSequencer" file="MobSequencer.lua" />
 		<!-- Window Elements -->
 		<includefile source="maa/maa_common_templates.xml" />
 		<includefile source="maa/maa_actor_effects.xml" />
