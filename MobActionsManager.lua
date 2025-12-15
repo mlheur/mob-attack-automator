@@ -135,7 +135,7 @@ function registerHandlers()
 	ActionsManager.registerResultHandler("damage",    self.onMobDamageResult);
 	ActionsManager.registerModHandler("powersave",    self.onMobPowersaveRoll);
 	ActionsManager.registerResultHandler("powersave", self.onMobPowersaveResult);
---	ActionsManager.registerModHandler("save",         self.onMobSaveRoll);
+	ActionsManager.registerModHandler("save",         self.onMobSaveRoll);
 	ActionsManager.registerResultHandler("save",      self.onMobSaveResult);
 end
 --------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ function unregisterHandlers()
 	ActionsManager.registerResultHandler("damage",    ActionDamage.onDamage);
 	ActionsManager.registerModHandler("powersave",    ActionPower.modCastSave);
 	ActionsManager.registerResultHandler("powersave", ActionPower.onPowerSave);
---	ActionsManager.registerModHandler("save",         ActionSave.modSave);
+	ActionsManager.registerModHandler("save",         ActionSave.modSave);
 	ActionsManager.registerResultHandler("save",      ActionSave.onSave);
 end
 --------------------------------------------------------------------------------
@@ -165,14 +165,18 @@ function hasAnyPendingRolls()
 end
 --------------------------------------------------------------------------------
 function hasPendingRoll(sPowerName,iMobAttackID,sRollType)
+	MobManager.dbg("++MobActiosnManager:hasPendingRoll()")
+	MobManager.dump("MobActiosnManager:hasPendingRoll() dump _pendingRolls",self._pendingRolls)
 	if (
 		self._pendingRolls
 		and self._pendingRolls[sPowerName]
 		and self._pendingRolls[sPowerName][iMobAttackID]
 		and self._pendingRolls[sPowerName][iMobAttackID][sRollType]
 	) then
+		MobManager.dbg("--MobActiosnManager:hasPendingRoll(): true exit")
 		return self._pendingRolls[sPowerName][iMobAttackID][sRollType]
 	end
+	MobManager.dbg("--MobActiosnManager:hasPendingRoll(): nil exit")
 end
 --------------------------------------------------------------------------------
 function addPendingRolls(sPowerName,iMobAttackID,sRollType,iQty)
@@ -195,10 +199,12 @@ local function __sendChatMessage(sMsg)
 end
 --------------------------------------------------------------------------------
 function reportMobAttackStarting()
-	local sResultMsg = self.sMobberName
-	sResultMsg = sResultMsg .. " has incited a mob attack against "
-	sResultMsg = sResultMsg .. self.sVictimName
-	__sendChatMessage(sResultMsg)
+	if (MobSequencer._gateNumber or 0) <= 2 then
+		local sResultMsg = self.sMobberName
+		sResultMsg = sResultMsg .. " has incited a mob attack against "
+		sResultMsg = sResultMsg .. self.sVictimName
+		__sendChatMessage(sResultMsg)
+	end
 end
 --------------------------------------------------------------------------------
 function onMobAttackRoll(rSource, rTarget, rRoll)
@@ -215,6 +221,7 @@ function onMobAttackRoll(rSource, rTarget, rRoll)
 	local rPower = __resolvePower(rRoll.sDesc, rSource.sCTNode)
 	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower)
 	if seqFn == MobSequencer.startingGate then seqFn() end
+	self.reportMobAttackStarting()
 
 	-- The "primary key" for an individual mob attack is:
 	--- [rPower.name][rRoll.iMobAttackID];
@@ -225,7 +232,6 @@ function onMobAttackRoll(rSource, rTarget, rRoll)
 	-- All this is necessary because multi-attack can happen out of order during intuitive DM clicking on the Combat Tracker NPC abilities.
 	rRoll.iMobAttackID = MobHitTracker.startTrackingHits(rPower.name, self.aMob)
 	
-	self.reportMobAttackStarting()
 	
 	self.tSkipTurnEffect.nInit = DB.getValue(rSource.sCTNode..".initresult") - 1
 	self.addPendingRolls(rPower.name,rRoll.iMobAttackID,"attack",#self.aMob)
@@ -255,14 +261,25 @@ end
 --------------------------------------------------------------------------------
 function reportMobAttackInProgress(rRoll,sMobberPath)
 	MobManager.dbg("++MobActionsManager:reportMobAttackInProgress()")
+
 	local sResultMsg = ""
-	sResultMsg = sResultMsg .. "A total of "
-	sResultMsg = sResultMsg .. #self.aMob.." "
-	sResultMsg = sResultMsg .. self.sMobCreatureBasename.."s "
-	sResultMsg = sResultMsg .. "assault "
-	sResultMsg = sResultMsg .. self.sVictimName
-	sResultMsg = sResultMsg .. " with their "
-	sResultMsg = sResultMsg .. rRoll.sPowerName.."s.  "
+	if (MobSequencer._gateNumber or 0) <= 2 then
+		local sPlural = "s"
+		if #self.aMob == 1 then sPlural = "" end
+		sResultMsg = sResultMsg .. "A total of "
+		sResultMsg = sResultMsg .. #self.aMob.." "
+		sResultMsg = sResultMsg .. self.sMobCreatureBasename..sPlural.." "
+		sResultMsg = sResultMsg .. "assault "
+		sResultMsg = sResultMsg .. self.sVictimName
+		sResultMsg = sResultMsg .. " with their "
+		sResultMsg = sResultMsg .. rRoll.sPowerName..sPlural..". "
+	else
+		sResultMsg = sResultMsg .. #self.aMob.." "
+		sResultMsg = sResultMsg .. "of the mobbers continue their "
+		sResultMsg = sResultMsg .. rRoll.sPowerName.." "
+		sResultMsg = sResultMsg .. "assault on "
+		sResultMsg = sResultMsg .. self.sVictimName..".  "
+	end
 
 	local tResults = MobHitTracker.summarizeHits(rRoll.sPowerName,rRoll.iMobAttackID)
 	for sResult,iQty in pairs(tResults) do
@@ -388,9 +405,9 @@ function onMobPowersaveRoll(rSource,rTarget,rRoll)
 	local rPower = __resolvePower(rRoll.sDesc, rSource.sCTNode)
 	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower)
 	if seqFn == MobSequencer.startingGate then seqFn() end
+	self.reportMobAttackStarting()
 
 	rRoll.iMobAttackID = MobHitTracker.startTrackingHits(rPower.name, self.aMob)
-	self.reportMobAttackStarting()
 	self.tSkipTurnEffect.nInit = DB.getValue(rSource.sCTNode..".initresult") - 1
 	self.addPendingRolls(rPower.name,rRoll.iMobAttackID,"save",#self.aMob)
 	if __powersaveHasDamage(rPower) then
@@ -435,15 +452,34 @@ function findMobber(sActorPath)
 	MobManager.dbg("--MobActionsManager:findMobber(): nil exit")
 end
 --------------------------------------------------------------------------------
-function onMobSaveResult(rSource,rTarget,rRoll)
-	MobManager.dbg("++MobActionsManager:onMobSaveResult() ::: Called by the game engine from our ActionsManager.AddResultHandler() submission")
-	ActionSave.onSave(rSource,rTarget,rRoll)
-
+function onMobSaveRoll(rSource,rTarget,rRoll)
+	MobManager.dbg("++MobActionsManager:onMobSaveRoll() ::: Called by the game engine from our ActionsManager.AddResultHandler() submission")
 	local rMobber = self.findMobber(rRoll.sSource)
 	local rPower = __resolvePower(rRoll.sSaveDesc, rRoll.sSource)
 	rRoll.sPowerName = rPower.name
 	rRoll.iMobAttackID = MobHitTracker.findAttackID(rRoll,rMobber.sCTNode)
-
+	if not (
+		rMobber
+		and
+		rSource.sCTNode == self.rVictim.sCTNode
+		and
+		self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"save")
+	) then
+		MobManager.dbg("--MobActionsManager:onMobSaveRoll(): nil exit")
+		return
+	end
+	rRoll.bMobSave = true
+	rRoll.bRemoveOnMiss = false
+	MobManager.dump("MobActionsManager:onMobSaveRoll() dump rRoll", rRoll)
+	MobManager.dbg("--MobActionsManager:onMobSaveRoll(): nil exit")
+end
+--------------------------------------------------------------------------------
+function onMobSaveResult(rSource,rTarget,rRoll)
+	MobManager.dbg("++MobActionsManager:onMobSaveResult() ::: Called by the game engine from our ActionsManager.AddResultHandler() submission")
+	MobManager.dump("MobActionsManager:onMobSaveResult() dump rRoll", rRoll)
+	local rMobber = self.findMobber(rRoll.sSource)
+	rRoll.iMobAttackID = tonumber(rRoll.iMobAttackID)
+	ActionSave.onSave(rSource,rTarget,rRoll)
 	if not (
 		rMobber
 		and
@@ -469,6 +505,7 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 
 	MobHitTracker.logResult(rMobber,rRoll)
 
+	local rPower = __resolvePower(rRoll.sPowerName, rRoll.sSource)
 	if __powersaveHasDamage(rPower) then
 		if (
 			rRoll.sResults == "[SUCCESS]"
@@ -486,10 +523,9 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 		self.reportMobAttackInProgress(rRoll,rMobber.sCTNode)
 		if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 			self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
-		else
-			local seqFn = MobSequencer.getSequencer()
-			if seqFn then seqFn() end
 		end
+		local seqFn = MobSequencer.getSequencer()
+		if seqFn then seqFn() end
 	end
 
 	MobManager.dump("MobActionsManager:onMobSaveResult() dump rSource", rSource)
