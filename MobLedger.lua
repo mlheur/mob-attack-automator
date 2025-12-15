@@ -65,7 +65,7 @@ function getTotal(rRoll)
 	MobManager.dbg("++MobLedger:getTotal(sPowerName=["..sPowerName.."],iMobAttackID=["..iMobAttackID.."])")
 	local iTotal = 0
 	if (self._iTotals and self._iTotals[sPowerName]) then
-		iTotal = self._iTotals[sPowerName][iMobAttackID]
+		iTotal = self._iTotals[sPowerName][iMobAttackID] or 0
 		self._iTotals[sPowerName][iMobAttackID] = {}
 		self._mobLedger[sPowerName][iMobAttackID] = {}
 		for i,VAR in ipairs({"_iTotals","_mobLedger"}) do

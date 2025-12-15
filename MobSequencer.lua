@@ -1,6 +1,7 @@
 function reset()
 	self._gateNumber = nil
 	self._misses     = {}
+	self._fails      = {}
 	self.rPower      = nil
 	self.rMobber     = nil 
 	self.rVictim     = nil
@@ -29,6 +30,14 @@ function runSave(iAbility)
 	MobManager.dbg("--MobSequencer:runDamage(): normal exit")
 end
 
+function applyEffect(iAbility)
+	for _ in ipairs(self._fails) do
+		local rEffect = self.rPower.aAbilities[iAbility]
+		EffectManager.addEffect("", "", DB.findNode(self.rVictim.sCTNode), rEffect, true)
+		return
+	end
+end
+
 function gateManager()
 	MobManager.dbg("++MobSequencer:gateManager(rPower=["..self.rPower.name.."])")
 	self.dump("MobSequencer:gateManager() startup")
@@ -55,6 +64,8 @@ function gateManager()
 			self.runDamage(thisGate)
 		elseif sType == "powersave" then
 			self.runSave(thisGate)
+		elseif sType == "effect" then
+			self.applyEffect(thisGate)
 		end
 		if thisGate == #self.rPower.aAbilities then
 			MobManager.dbg("MobSequencer:gateManager() gating complete")
@@ -62,6 +73,12 @@ function gateManager()
 		end
 	end
 	MobManager.dbg("--MobSequencer:gateManager(): normal exit")
+end
+
+function informFail(rSource)
+	if self._gateNumber then
+		table.insert(self._fails, rSource.sCTNode)
+	end
 end
 
 function informMiss(rSource)
@@ -73,6 +90,7 @@ end
 function startingGate(rMobber,rVictim)
 	self._gateNumber = 2
 	self._misses     = {}
+	self._fails      = {}
 end
 
 function getSequencer(rMobber,rVictim,rPower)
@@ -86,7 +104,10 @@ function getSequencer(rMobber,rVictim,rPower)
 				   rPower.aAbilities[1].sType == "attack"
 				or rPower.aAbilities[1].sType == "powersave"
 			)
-			and rPower.aAbilities[2].sType == "damage"
+			and (
+				   rPower.aAbilities[2].sType == "damage"
+				or rPower.aAbilities[2].sType == "effect"
+			)
 			then
 				bCanAutomate = true
 			elseif #rPower.aAbilities == 3
@@ -99,7 +120,10 @@ function getSequencer(rMobber,rVictim,rPower)
 			and rPower.aAbilities[1].sType == "attack"
 			and rPower.aAbilities[2].sType == "damage"
 			and rPower.aAbilities[3].sType == "powersave"
-			and rPower.aAbilities[4].sType == "damage"
+			and (
+				   rPower.aAbilities[2].sType == "damage"
+				or rPower.aAbilities[2].sType == "effect"
+			)
 			then
 				bCanAutomate = true
 			end

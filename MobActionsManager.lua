@@ -459,10 +459,12 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 	
 	if rRoll.sDesc:match("%[AUTOFAIL%]") then
 		rRoll.sResults = "[AUTOFAIL]"
+		MobSequencer.informFail(rMobber)
 	elseif rRoll.nTotal >= rRoll.nTarget then
 		rRoll.sResults = "[SUCCESS]";
 	else
 		rRoll.sResults = "[FAILURE]";
+		MobSequencer.informFail(rMobber)
 	end
 
 	MobHitTracker.logResult(rMobber,rRoll)
