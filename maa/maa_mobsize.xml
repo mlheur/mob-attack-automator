@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<root>
+
+	<template name="maa_mobsize">
+		<numbercontrol name="mobsize">
+			<activate /><nodrag /><nodrop />
+			<frame name="context_single_hover" />
+			<font>subwindowtitle</font>
+			<color>FFFFFFFF</color>
+			<anchored to="mobber" height="30" width="40">
+				<left offset="10"/>
+				<top offset="10" />
+			</anchored>
+			<script>
+				function onValueChanged()
+					setVisible(getValue()>1)
+				end
+			</script>
+		</numbercontrol>
+	</template>
+
+</root>

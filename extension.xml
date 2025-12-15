@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 <root version="3.0" release="1">
-	<announcement text="Mob Attack Automator (C) 2025 mlheur@gmail.com" font="emotefont" icon="MAA_icon" />
+	<announcement text="Mob Attack Automator (C) 2025 mlheur@gmail.com" font="emotefont" icon="maa_icon" />
 	<properties>
 		<name>mob-attack-automator</name>
-		<version>1</version>
+		<version>2</version>
 		<author>mlheur</author>
 		<description>Automate mobs of critters, or squads of archers, all attacking a single target.</description>
 		<ruleset><name>5E</name></ruleset>
 		<loadorder>125</loadorder>
 	</properties>
 	<base>
-        <string name="MAA_window_title">Mob Attack Automator</string>
-        <string name="MAA_label_button_roll">Mob Attack!!!</string>
-        <string name="MAA_label_attacker">Mobbers</string>
-        <string name="MAA_label_target">Victim</string>
-        <string name="MAA_atk_label">ATK</string>
-        <string name="MAA_qty_label">Qty</string>
-        <string name="MAA_ac_label">AC</string>
-		<icon name="MAA_icon" file="graphics/buttons/button_roll.png" />
-        <script name="MAA" file="scripts/MAA.lua" />
-		<includefile source="windows/window_classes.xml" />
-		<includefile source="windows/window_templates.xml" />
+		<!-- Static Resources -->
+		<string name="maa_window_title">Mob Attack Automator</string>
+		<string name="maa_label_mobber">Mobbers</string>
+		<string name="maa_label_victim">Victim</string>
+		<string name="maa_label_mobsize">Mob Size</string>
+		<string name="maa_label_skipturn_effect">Mob Attack</string>
+		<icon   name="maa_icon" file="graphics/buttons/button_roll.png" />
+		<!-- Dynamic Resources -->
+		<script name="MobManager" file="MobManager.lua" />
+		<script name="MobLedger" file="MobLedger.lua" />
+		<script name="MobHitTracker" file="MobHitTracker.lua" />
+		<script name="MobActionsManager" file="MobActionsManager.lua" />
+		<script name="MobSequencer" file="MobSequencer.lua" />
+		<!-- Window Elements -->
+		<includefile source="maa/maa_common_templates.xml" />
+		<includefile source="maa/maa_actor_effects.xml" />
+		<includefile source="maa/maa_actor_stats.xml" />
+		<includefile source="maa/maa_power.xml" />
+		<includefile source="maa/maa_actor.xml" />
+		<includefile source="maa/maa_mobsize.xml" />
+		<includefile source="maa/maa_help.xml" />
+		<includefile source="maa/maa_drop_handler.xml" />
+		<includefile source="maa/maa.xml" />
 	</base>
 </root>
