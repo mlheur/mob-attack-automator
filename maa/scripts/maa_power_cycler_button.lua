@@ -28,8 +28,10 @@ function onButtonPress()
 		end
 	end
 	if iNewAction < 1 then
+		window.rollActionlistBack()
 		iNewAction = #window.aActions
 	elseif iNewAction > #window.aActions then
+		window.rollActionlistForward()
 		iNewAction = 1
 	end
 	window.onValueChanged(iNewAction)

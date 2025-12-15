@@ -16,24 +16,24 @@ tSkipTurnEffect = {
 	nGMOnly   = 0,
 	nInit     = 0,
 }
+aPowerTypes = {
+	"actions",
+	"legendaryactions",
+	"lairactions",
+	"reactions",
+	"bonusactions",
+	"traits",
+	"innatespells",
+	"spells",
+}
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 local function __resolvePower(sRollDesc,sMobberPath)
 	MobManager.dbg("++MobActionsManager:__resolvePower()")
-	local aPowerTypes = {
-		"actions",
-		"legendaryactions",
-		"lairactions",
-		"reactions",
-		"bonusactions",
-		"traits",
-		"innatespells",
-		"spells",
-	}
 	local sRolledPower = StringManager.simplify(StringManager.sanitize(sRollDesc:gsub("%[[^%]]*%]","")))
 	MobManager.dbg("MobActionsManager:__resolvePower() sRolledPower=["..sRolledPower.."]")
-	for i,sPowerType in ipairs(aPowerTypes) do
+	for i,sPowerType in ipairs(self.aPowerTypes) do
 		MobManager.dbg("MobActionsManager:__resolvePower() checking sPowerType=["..sPowerType.."]")
 		for j,nPower in ipairs(DB.getChildList(sMobberPath.."."..sPowerType) ) do
 			local sPowerName = StringManager.sanitize(DB.getValue(nPower,"name",""))

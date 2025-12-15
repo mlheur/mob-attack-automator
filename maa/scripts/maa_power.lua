@@ -21,8 +21,33 @@ function onInit()
 	if super and super.onInit then super.onInit() end
 	local sClass
 	sClass,self.sCTNode = parentcontrol.getValue()
-	self.aActions = DB.getChildList(self.sCTNode..".actions")
+	self.iCurrentPowerType = 1
+	self.aActions = DB.getChildList(self.sCTNode.."."..MobActionsManager.aPowerTypes[self.iCurrentPowerType])
 	self.onValueChanged()
 	MobManager.dbg("--maa_power:onInit(): normal exit, self.sCTNode=["..self.sCTNode.."]")
+end
+--------------------------------------------------------------------------------
+function rollActionlistForward()
+	self.aActions = {}
+	while #self.aActions == 0 do
+		if self.iCurrentPowerType == #MobActionsManager.aPowerTypes then
+			self.iCurrentPowerType = 1
+		else
+			self.iCurrentPowerType = self.iCurrentPowerType + 1
+		end
+		self.aActions = DB.getChildList(self.sCTNode.."."..MobActionsManager.aPowerTypes[self.iCurrentPowerType])
+	end
+end
+--------------------------------------------------------------------------------
+function rollActionlistBack()
+	self.aActions = {}
+	while #self.aActions == 0 do
+		if self.iCurrentPowerType == 1 then
+			self.iCurrentPowerType = #MobActionsManager.aPowerTypes
+		else
+			self.iCurrentPowerType = self.iCurrentPowerType - 1
+		end
+		self.aActions = DB.getChildList(self.sCTNode.."."..MobActionsManager.aPowerTypes[self.iCurrentPowerType])
+	end
 end
 --------------------------------------------------------------------------------
