@@ -56,6 +56,11 @@ function gateManager()
 				end
 				MobActionsManager.aMob = newMob
 			end
+			if #MobActionsManager.aMob == 0 then
+				self.reset()
+				MobManager.dbg("--MobSequencer:gateManager(): premature exit, everyone missed the previous damage roll")
+				return
+			end
 			self._misses = {}
 		end
 		local sType = self.rPower.aAbilities[thisGate].sType
