@@ -70,7 +70,7 @@ end
 --------------------------------------------------------------------------------
 local function __powersaveHasDamage(rPower)
 	MobManager.dbg("++MobActionsManager:__powersaveHasDamage()")
-	MobManager.dump("MobActionsManager:__powersaveHasDamage() going in: dump rPower", rPower)
+	--MobManager.dump("MobActionsManager:__powersaveHasDamage() going in: dump rPower", rPower)
 	local bSeenPowersave = false
 	for i,v in ipairs(rPower.aAbilities) do 
 		if v.sType == "powersave" then
