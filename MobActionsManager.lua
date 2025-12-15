@@ -238,7 +238,6 @@ function onMobAttackRoll(rSource, rTarget, rRoll)
 	self.addPendingRolls(rPower.name,rRoll.iMobAttackID,"damage",#self.aMob)
 	rRoll.bMobAttack = true
 	rRoll.bSecret = false
-	rRoll.bRemoveOnMiss = false
 	local bUnlock
 	ActionsManager.lockModifiers()
 	for i,rMobber in ipairs(self.aMob) do
@@ -293,12 +292,20 @@ function reportMobAttackInProgress(rRoll,sMobberPath)
 	MobManager.dbg("--MobActionsManager:reportMobAttackInProgress(): normal exit")
 end
 --------------------------------------------------------------------------------
+function reTargetVictim()
+	self.aMob = UtilityManager.copyDeep(self.aMob_shadow)
+	for i,rMobber in ipairs(self.aMob) do
+		TargetingManager.notifyAddTarget(rMobber.sCTNode,self.rVictim.sCTNode)
+	end
+end
+--------------------------------------------------------------------------------
 function reportMobAttackComplete(rRoll)
 	local sResultMsg = ""
 	local iTotal = MobLedger.getTotal(rRoll)
 	if iTotal > 0 then sResultMsg = sResultMsg .. "A total of " .. iTotal .. " damage was dealt.  "
 	else sResultMsg = sResultMsg .. "No damage was dealt.  " end
 	__sendChatMessage(sResultMsg)
+	self.reTargetVictim()
 end
 --------------------------------------------------------------------------------
 function onMobAttackResult(rSource, rTarget, rRoll)
@@ -353,7 +360,6 @@ function onMobDamageRoll(rSource,rTarget,rRoll)
 	end
 	rRoll.bMobDamage = true
 	rRoll.bSecret = false
-	rRoll.bRemoveOnMiss = false
 	local nFollowupActions = 0
 	for i,rMobber in ipairs(self.aMob) do
 		MobManager.dbg("MobActionsManager:onMobDamageRoll() checking if rMobber["..rMobber.sCTNode.."] is in the ledger")
@@ -415,7 +421,6 @@ function onMobPowersaveRoll(rSource,rTarget,rRoll)
 	end
 	rRoll.bMobSave = true
 	rRoll.bSecret = false
-	rRoll.bRemoveOnMiss = false
 	local bUnlock
 	ActionsManager.lockModifiers()
 	for i,rMobber in ipairs(self.aMob) do
@@ -469,7 +474,6 @@ function onMobSaveRoll(rSource,rTarget,rRoll)
 		return
 	end
 	rRoll.bMobSave = true
-	rRoll.bRemoveOnMiss = false
 	MobManager.dump("MobActionsManager:onMobSaveRoll() dump rRoll", rRoll)
 	MobManager.dbg("--MobActionsManager:onMobSaveRoll(): nil exit")
 end
