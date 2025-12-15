@@ -165,18 +165,18 @@ function hasAnyPendingRolls()
 end
 --------------------------------------------------------------------------------
 function hasPendingRoll(sPowerName,iMobAttackID,sRollType)
-	MobManager.dbg("++MobActiosnManager:hasPendingRoll()")
-	MobManager.dump("MobActiosnManager:hasPendingRoll() dump _pendingRolls",self._pendingRolls)
+	MobManager.dbg("++MobActionsManager:hasPendingRoll()")
+	MobManager.dump("MobActionsManager:hasPendingRoll() dump _pendingRolls",self._pendingRolls)
 	if (
 		self._pendingRolls
 		and self._pendingRolls[sPowerName]
 		and self._pendingRolls[sPowerName][iMobAttackID]
 		and self._pendingRolls[sPowerName][iMobAttackID][sRollType]
 	) then
-		MobManager.dbg("--MobActiosnManager:hasPendingRoll(): true exit")
+		MobManager.dbg("--MobActionsManager:hasPendingRoll(): true exit")
 		return self._pendingRolls[sPowerName][iMobAttackID][sRollType]
 	end
-	MobManager.dbg("--MobActiosnManager:hasPendingRoll(): nil exit")
+	MobManager.dbg("--MobActionsManager:hasPendingRoll(): nil exit")
 end
 --------------------------------------------------------------------------------
 function addPendingRolls(sPowerName,iMobAttackID,sRollType,iQty)
