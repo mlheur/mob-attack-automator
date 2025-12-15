@@ -165,7 +165,7 @@ function hasAnyPendingRolls()
 end
 --------------------------------------------------------------------------------
 function hasPendingRoll(sPowerName,iMobAttackID,sRollType)
-	MobManager.dbg("++MobActionsManager:hasPendingRoll()")
+	MobManager.dbg("++MobActionsManager:hasPendingRoll(sPowerName=["..tostring(sPowerName).."],iMobAttackID=["..tostring(iMobAttackID).."],sRollType=["..tostring(sRollType).."])")
 	MobManager.dump("MobActionsManager:hasPendingRoll() dump _pendingRolls",self._pendingRolls)
 	if (
 		self._pendingRolls
@@ -173,7 +173,7 @@ function hasPendingRoll(sPowerName,iMobAttackID,sRollType)
 		and self._pendingRolls[sPowerName][iMobAttackID]
 		and self._pendingRolls[sPowerName][iMobAttackID][sRollType]
 	) then
-		MobManager.dbg("--MobActionsManager:hasPendingRoll(): true exit")
+		MobManager.dbg("--MobActionsManager:hasPendingRoll(): true exit iPendingRolls=["..tostring(self._pendingRolls[sPowerName][iMobAttackID][sRollType]).."]")
 		return self._pendingRolls[sPowerName][iMobAttackID][sRollType]
 	end
 	MobManager.dbg("--MobActionsManager:hasPendingRoll(): nil exit")
@@ -329,10 +329,9 @@ function onMobAttackResult(rSource, rTarget, rRoll)
 				self.reportMobAttackInProgress(rRoll,rSource.sCTNode)
 				if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 					self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
-				else
-					local seqFn = MobSequencer.getSequencer()
-					if seqFn then seqFn() end
 				end
+				local seqFn = MobSequencer.getSequencer()
+				if seqFn then seqFn() end
 			end
 		end
 	end
@@ -352,7 +351,7 @@ function onMobDamageRoll(rSource,rTarget,rRoll)
 		and
 		rTarget and (rTarget.sCTNode == self.rVictim.sCTNode)
 		and
-		self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage")
+		(self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) > 0
 	) then
 		ActionDamage.modDamage(rSource, rTarget, rRoll)
 		MobManager.dbg("--MobActionsManager:onMobDamageRoll(): nil exit")
@@ -468,7 +467,7 @@ function onMobSaveRoll(rSource,rTarget,rRoll)
 		and
 		rSource.sCTNode == self.rVictim.sCTNode
 		and
-		self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"save")
+		(self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"save") or 0) > 0
 	) then
 		MobManager.dbg("--MobActionsManager:onMobSaveRoll(): nil exit")
 		return
@@ -489,7 +488,7 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 		and
 		rSource.sCTNode == self.rVictim.sCTNode
 		and
-		self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"save")
+		(self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"save") or 0) > 0
 	) then
 		MobManager.dbg("--MobActionsManager:onMobSaveResult(): nil exit")
 		return
