@@ -90,9 +90,11 @@ function recvTokenCommand(msgOOB)
 			local tVisibility = {}
 			__unpackTokenVisibility(tVisibility,msgOOB)
 			for sActorPath,iVisible in pairs(tVisibility) do
+				local bVisible = iVisible == 1
 				tokenCT = CombatManager.getTokenFromCT(DB.findNode(sActorPath))
 				if tokenCT then
-					TokenManager.setActiveWidget(tokenCT,nil,(iVisible==1))
+					if Session.IsHost then tokenCT.setPublicVision(bVisible) end
+					TokenManager.setActiveWidget(tokenCT,nil,bVisible)
 				end
 			end
 		end
