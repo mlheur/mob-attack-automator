@@ -495,6 +495,10 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 	end
 
 	self.deductPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"save")
+
+	-- Normalize some values that come in awkwardly during manual-roll enabled testing.
+	rRoll.nTarget = tonumber(rRoll.nTarget) or 0
+	rRoll.nTotal = tonumber(rRoll.nTotal) or ( rRoll.aDice[1].result or 0 )
 	
 	if rRoll.sDesc:match("%[AUTOFAIL%]") then
 		rRoll.sResults = "[AUTOFAIL]"
