@@ -18,20 +18,20 @@ function identifyMobbers()
 		--MobManager.dbg("maa:identifyMobbers() iThisInit=["..tostring(iThisInit).."] iMobInit=["..tostring(iMobInit).."] sThisSourcelink=["..tostring(sThisSourcelink).."] sSourcelink=["..tostring(sSourcelink).."]")
 		if bMatchInit and bMatchSource then
 			if not EffectManager.hasEffect(rActor,"SKIPTURN") then				
-			local aTargets = TargetingManager.getFullTargets(rActor)
-			--MobManager.dbg("maa:identifyMobbers() bMatchInit=["..tostring(bMatchInit).."] bMatchSource=["..tostring(bMatchSource).."] aTargets=["..tostring(aTargets).."] #aTargets=["..tostring(#aTargets).."]")
-			for i2,rTarget in ipairs(aTargets) do
-				--MobManager.dbg("maa:identifyMobbers() i2=["..tostring(i2).."] rActor.sCTNode=["..tostring(rActor.sCTNode).."] rTarget.sCTNode=["..tostring(rTarget.sCTNode).."]")
-				local bMatchTarget = (rTarget.sCTNode == self.rVictim.sCTNode)
-				--MobManager.dbg("maa:identifyMobbers() bMatchTarget=["..tostring(bMatchTarget).."]")
-				if bMatchTarget then
-					tVisibility[rActor.sCTNode] = 1
-					table.insert(self.aMob, rActor)
-					break
+				local aTargets = TargetingManager.getFullTargets(rActor)
+				--MobManager.dbg("maa:identifyMobbers() bMatchInit=["..tostring(bMatchInit).."] bMatchSource=["..tostring(bMatchSource).."] aTargets=["..tostring(aTargets).."] #aTargets=["..tostring(#aTargets).."]")
+				for i2,rTarget in ipairs(aTargets) do
+					--MobManager.dbg("maa:identifyMobbers() i2=["..tostring(i2).."] rActor.sCTNode=["..tostring(rActor.sCTNode).."] rTarget.sCTNode=["..tostring(rTarget.sCTNode).."]")
+					local bMatchTarget = (rTarget.sCTNode == self.rVictim.sCTNode)
+					--MobManager.dbg("maa:identifyMobbers() bMatchTarget=["..tostring(bMatchTarget).."]")
+					if bMatchTarget then
+						tVisibility[rActor.sCTNode] = 1
+						table.insert(self.aMob, rActor)
+						break
+					end
 				end
 			end
 		end
-	end
 	end
 	mobsize.setValue(#self.aMob)
 	MobManager.dbg("--maa:identifyMobbers(): normal exit")
@@ -98,6 +98,7 @@ function onInit()
 	MobManager.dbg("++maa:onInit()")
 	if super and super.onInit then super.onInit() end
 	self.sTrackerPath = CombatManager.getTrackerPath()
+	DB.addHandler(self.sTrackerPath .. ".round",     "onUpdate",           self.refreshActors)
 	DB.addHandler(self.sTrackerPath .. ".*.active",  "onUpdate",           self.refreshActors)
 	DB.addHandler(self.sTrackerPath .. ".*.targets", "onChildDeleted",     self.refreshActors)
 	DB.addHandler(self.sTrackerPath .. ".*.targets.*.noderef", "onUpdate", self.refreshActors)
@@ -113,6 +114,7 @@ function onClose()
 	DB.removeHandler(self.sTrackerPath .. ".*.targets.*.noderef", "onUpdate", self.refreshActors)
 	DB.removeHandler(self.sTrackerPath .. ".*.targets", "onChildDeleted",     self.refreshActors)
 	DB.removeHandler(self.sTrackerPath .. ".*.active",  "onUpdate",           self.refreshActors)
+	DB.removeHandler(self.sTrackerPath .. ".round",     "onUpdate",           self.refreshActors)
 	DB.deleteChildren(self.nData)
 	if super and super.onClose then super.onClose() end
 	MobManager.dbg("--maa:onClose(): normal exit")
