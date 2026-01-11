@@ -219,7 +219,7 @@ function onMobAttackRoll(rSource, rTarget, rRoll)
 		return
 	end
 	local rPower = __resolvePower(rRoll.sDesc, rSource.sCTNode)
-	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower)
+	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower,rRoll)
 	if seqFn == MobSequencer.startingGate then seqFn() end
 	self.reportMobAttackStarting()
 
@@ -241,11 +241,11 @@ function onMobAttackRoll(rSource, rTarget, rRoll)
 	local bUnlock
 	ActionsManager.lockModifiers()
 	for i,rMobber in ipairs(self.aMob) do
-		local rMobRoll = UtilityManager.copyDeep(rRoll)
-		rMobRoll.sPowerName = rPower.name
-		ActionAttack.modAttack(rMobber, self.rVictim, rMobRoll)
-		bUnlock = __addModStack(rMobRoll)
-		ActionsManager.roll(rMobber, self.rVictim, rMobRoll)
+			local rMobRoll = UtilityManager.copyDeep(rRoll)
+			rMobRoll.sPowerName = rPower.name
+			ActionAttack.modAttack(rMobber, self.rVictim, rMobRoll)
+			bUnlock = __addModStack(rMobRoll)
+			ActionsManager.roll(rMobber, self.rVictim, rMobRoll)
 		if not EffectManager.hasEffect(rMobber,"SKIPTURN") then
 			EffectManager.addEffect("", "",DB.findNode(rMobber.sCTNode), self.tSkipTurnEffect, false)
 		end
@@ -408,7 +408,7 @@ function onMobPowersaveRoll(rSource,rTarget,rRoll)
 		return
 	end
 	local rPower = __resolvePower(rRoll.sDesc, rSource.sCTNode)
-	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower)
+	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower,rRoll)
 	if seqFn == MobSequencer.startingGate then seqFn() end
 	self.reportMobAttackStarting()
 
@@ -423,11 +423,11 @@ function onMobPowersaveRoll(rSource,rTarget,rRoll)
 	local bUnlock
 	ActionsManager.lockModifiers()
 	for i,rMobber in ipairs(self.aMob) do
-		local rMobRoll = UtilityManager.copyDeep(rRoll)
-		rMobRoll.sPowerName = rPower.name
-		ActionPower.modCastSave(rMobber, self.rVictim, rMobRoll)
-		bUnlock = __addModStack(rMobRoll)
-		ActionsManager.roll(rMobber, self.rVictim, rMobRoll)
+			local rMobRoll = UtilityManager.copyDeep(rRoll)
+			rMobRoll.sPowerName = rPower.name
+			ActionPower.modCastSave(rMobber, self.rVictim, rMobRoll)
+			bUnlock = __addModStack(rMobRoll)
+			ActionsManager.roll(rMobber, self.rVictim, rMobRoll)
 		if not EffectManager.hasEffect(rMobber,"SKIPTURN") then
 			EffectManager.addEffect("", "",DB.findNode(rMobber.sCTNode), self.tSkipTurnEffect, false)
 		end
