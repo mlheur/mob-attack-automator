@@ -17,6 +17,7 @@ function identifyMobbers()
 		local bMatchSource = (sThisSourcelink == sSourcelink)
 		--MobManager.dbg("maa:identifyMobbers() iThisInit=["..tostring(iThisInit).."] iMobInit=["..tostring(iMobInit).."] sThisSourcelink=["..tostring(sThisSourcelink).."] sSourcelink=["..tostring(sSourcelink).."]")
 		if bMatchInit and bMatchSource then
+			if not EffectManager.hasEffect(rActor,"SKIPTURN") then				
 			local aTargets = TargetingManager.getFullTargets(rActor)
 			--MobManager.dbg("maa:identifyMobbers() bMatchInit=["..tostring(bMatchInit).."] bMatchSource=["..tostring(bMatchSource).."] aTargets=["..tostring(aTargets).."] #aTargets=["..tostring(#aTargets).."]")
 			for i2,rTarget in ipairs(aTargets) do
@@ -30,6 +31,7 @@ function identifyMobbers()
 				end
 			end
 		end
+	end
 	end
 	mobsize.setValue(#self.aMob)
 	MobManager.dbg("--maa:identifyMobbers(): normal exit")
