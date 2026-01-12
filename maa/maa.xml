@@ -19,8 +19,7 @@
 			<maa_stats_subwindow name="victim_stats" />
 <!--		<maa_btn_mobattack   name="btn_mobattack" />
 			<maa_btn_refresh     name="btn_refresh" />
--->			<maa_drop_handler />
-		</sheetdata>
+-->		</sheetdata>
 		<script file="maa/scripts/maa.lua" />
 	</windowclass>
 </root>

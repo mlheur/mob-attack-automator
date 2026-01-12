@@ -1,4 +1,8 @@
 --------------------------------------------------------------------------------
+function onDrop(x,y,oDragInfo)
+	parentcontrol.window.onDropOnVictim(x,y,oDragInfo)
+end
+--------------------------------------------------------------------------------
 function onValueChanged()
 	MobManager.dbg("++maa_actor:onValueChanged()")
 	local sNewFrame = "ctentrybox"

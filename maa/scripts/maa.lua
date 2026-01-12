@@ -85,14 +85,18 @@ function refreshActors(nActiveUpdated)
 	MobManager.dbg("--maa:refreshActors(): normal exit")
 end
 --------------------------------------------------------------------------------
-function onUpdateActiveCT(nActive)
-	MobManager.dbg("++maa:onUpdateActiveCT()")
-	if CombatManager.isActive(nActive.getParent()) then
-		MobActionsManager.reset()
-		self.refreshActors()
+function onDropOnVictim(x,y,oDragInfo)
+	MobManager.dbg("++maa:onDropOnVictim(x=["..x.."],y=["..y.."])")
+	MobManager.dump("maa:onDropOnVictim() dump oDragInfo",oDragInfo)
+	local bDropHandled = false
+	if self.bValidCombatTracker and (oDragInfo.getType() or "") == "dice" then
+		ActionsManager.actionDrop(oDragInfo,self.rVictim)
+		bDropHandled = true
 	end
-	MobManager.dbg("--maa:onUpdateActiveCT(): normal exit")
+	MobManager.dbg("--maa:onDropOnVictim(): normal exit")
+	return bDropHandled
 end
+
 --------------------------------------------------------------------------------
 function onInit()
 	MobManager.dbg("++maa:onInit()")

@@ -31,7 +31,6 @@
 		<includefile source="maa/maa_actor.xml" />
 		<includefile source="maa/maa_mobsize.xml" />
 		<includefile source="maa/maa_help.xml" />
-		<includefile source="maa/maa_drop_handler.xml" />
 		<includefile source="maa/maa.xml" />
 	</base>
 </root>

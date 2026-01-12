@@ -3,6 +3,7 @@
 
 	<template name="maa_actor_stat_ac">
 		<numberfield name="ac">
+			<readonly/>
 			<font name="sheetnumber" />
 			<anchored width="35" height="40">
 				<top offset="7"/>
@@ -68,7 +69,7 @@
 			<maa_actor_stat_label  name="label_ac" />
 			<maa_actor_stat_ac     name="ac" />
 			<maa_actor_stat_label  name="label_ct_label_wounds" />
-			<maa_actor_stat_value  name="wounds" datasource=".hp.wounds">
+			<maa_actor_stat_value  name="wounds" datasource=".hp.wounds" readonly="0" >
 				<script file="maa/scripts/maa_actor_wounds.lua" />
 			</maa_actor_stat_value>
 			<maa_actor_stat_label  name="label_hp" />
