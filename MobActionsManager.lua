@@ -306,6 +306,7 @@ function reportMobAttackComplete(rRoll)
 	else sResultMsg = sResultMsg .. "No damage was dealt.  " end
 	__sendChatMessage(sResultMsg)
 	self.reTargetVictim()
+	MobManager.sendAutoEndTurn()
 end
 --------------------------------------------------------------------------------
 function onMobAttackResult(rSource, rTarget, rRoll)
@@ -345,7 +346,7 @@ function onMobDamageRoll(rSource,rTarget,rRoll)
 	rRoll.sPowerName = rPower.name
 	rRoll.iMobAttackID = MobHitTracker.findAttackID(rRoll)
 	if not (
-		rRoll.iMobAttackID
+		rRoll.iMobAttackID and self.rMobber and self.rVictim
 		and
 		rSource and (rSource.sCTNode == self.rMobber.sCTNode)
 		and

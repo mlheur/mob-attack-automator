@@ -46,9 +46,12 @@ function chat(...)
 	end
 end
 --------------------------------------------------------------------------------
+-- ToDo: this can be refactored using self["OOBMSG_".."..."] because self is a dict.
 OOBMSG_TokenWidgetManager = "OOBMSG_"..sModName.."_TokenWidgetManager"
+OOBMSG_AutoEndTurn        = "OOBMSG_"..sModName.."_AutoEndTurn"
 function initOOB()
 	OOBManager.registerOOBMsgHandler(self.OOBMSG_TokenWidgetManager, self.recvTokenCommand)
+	OOBManager.registerOOBMsgHandler(self.OOBMSG_AutoEndTurn,        self.recvAutoEndTurn)
 end
 --------------------------------------------------------------------------------
 local function __packTokenVisibility(tData,tInto)
@@ -112,6 +115,16 @@ function sendTokenUpdate(tVisibility)
 	end
 	Comm.deliverOOBMessage(msgOOB)
 end
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+function recvAutoEndTurn()
+	CombatManager.nextActor()
+end
+--------------------------------------------------------------------------------
+function sendAutoEndTurn()
+	Comm.deliverOOBMessage({type = OOBMSG_AutoEndTurn, recipients = ""})
+end
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 function onInit()
 	self.dbg("++MobManager:onInit()")

@@ -49,7 +49,7 @@ end
 function gateManager()
 	MobManager.dbg("++MobSequencer:gateManager(rPower=["..self.rPower.name.."])")
 	self.dump("MobSequencer:gateManager() startup")
-	if self._gateNumber and self._gateNumber <= #self.rPower.aAbilities then
+	if MobActionsManager.aMob and self.rPower and self._gateNumber and self._gateNumber <= #self.rPower.aAbilities then
 		MobManager.dbg("MobSequencer:gateManager() _gateNumber=["..self._gateNumber.."]")
 		local thisGate = self._gateNumber
 		self._gateNumber = self._gateNumber + 1
