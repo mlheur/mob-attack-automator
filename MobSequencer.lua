@@ -3,177 +3,214 @@ local SEQUENCE_nil     = nil
 local SEQUENCE_linear  = 1
 local SEQUENCE_MorR    = 2
 
-function reset()
-	self._gateNumber = nil
-	self._misses     = {}
-	self._fails      = {}
-	self.rPower      = nil
-	self.rMobber     = nil 
-	self.rVictim     = nil
-	MobActionsManager.aMob = UtilityManager.copyDeep(MobActionsManager.aMob_shadow)
+_sequences = {}
+
+local function _decodeSequenceType(rPower)
+	if (
+		#rPower.aAbilities == 2
+		and (
+			   rPower.aAbilities[1].sType == "attack"
+			or rPower.aAbilities[1].sType == "powersave"
+		)
+		and (
+			   rPower.aAbilities[2].sType == "damage"
+			or rPower.aAbilities[2].sType == "effect"
+		)
+	)
+	or
+	(
+		#rPower.aAbilities == 3
+		and rPower.aAbilities[1].sType == "powersave"
+		and rPower.aAbilities[2].sType == "damage"
+		and rPower.aAbilities[3].sType == "usage"
+	)
+	or
+	(
+		#rPower.aAbilities == 4
+		and rPower.aAbilities[1].sType == "attack"
+		and rPower.aAbilities[2].sType == "damage"
+		and rPower.aAbilities[3].sType == "powersave"
+		and (
+			   rPower.aAbilities[4].sType == "effect"
+			or rPower.aAbilities[4].sType == "damage"
+		)
+	)
+	then
+		return SEQUENCE_linear
+	elseif (
+		#rPower.aAbilities == 4
+		and rPower.aAbilities[1].sType == "attack"
+		and rPower.aAbilities[2].sType == "damage"
+		and rPower.aAbilities[3].sType == "attack"
+		and rPower.aAbilities[4].sType == "damage"
+		and (
+			rPower.aAbilities[1].range == rPower.aAbilities[2].range
+			and
+			rPower.aAbilities[3].range == rPower.aAbilities[4].range
+			and
+			rPower.aAbilities[1].range ~= rPower.aAbilities[3].range
+		)
+	)
+	then
+		return SEQUENCE_MorR
+	end
+	return SEQUENCE_nil
 end
 
-function dump(sMsg)
-	MobManager.dbg(sMsg .. " _gateNumber=[".._gateNumber.."]")
-	MobManager.dbg(sMsg .. " rPower=["..rPower.name.."]")
-	MobManager.dbg(sMsg .. " rMobber=["..rMobber.sCTNode.."]")
-	MobManager.dbg(sMsg .. " rVictim=["..rVictim.sCTNode.."]")
-	MobManager.dump(sMsg .. " dump _misses", self._misses)
-end
-
-function runDamage(iAbility)
-	MobManager.dbg("++MobSequencer:runDamage(iAbility=["..iAbility.."])")
-	local rRoll = ActionDamage.getRoll(self.rMobber,self.rPower.aAbilities[iAbility])
-	MobActionsManager.onMobDamageRoll(self.rMobber,self.rVictim,rRoll)
+local function _runDamage(sequence)
+	MobManager.dbg("++MobSequencer:runDamage(sequence.nGate=["..sequence.nGate.."])")
+	local rRoll = ActionDamage.getRoll(sequence.rMobber,sequence.rPower.aAbilities[sequence.nGate])
+	MobActionsManager.onMobDamageRoll(sequence.rMobber,sequence.rVictim,rRoll)
 	MobManager.dbg("--MobSequencer:runDamage(): normal exit")
 end
 
-function runSave(iAbility)
-	MobManager.dbg("++MobSequencer:runDamage(iAbility=["..iAbility.."])")
-	local rRoll = ActionPower.getSaveVsRoll(self.rMobber,self.rPower.aAbilities[iAbility])
-	MobActionsManager.onMobPowersaveRoll(self.rMobber,self.rVictim,rRoll)
+local function _runSave(sequence)
+	MobManager.dbg("++MobSequencer:runDamage(sequence.nGate=["..sequence.nGate.."])")
+	local rRoll = ActionPower.getSaveVsRoll(sequence.rMobber,sequence.rPower.aAbilities[sequence.nGate])
+	MobActionsManager.onMobPowersaveRoll(sequence.rMobber,sequence.rVictim,rRoll)
 	MobManager.dbg("--MobSequencer:runDamage(): normal exit")
 end
 
-function applyEffect(iAbility)
-	for _ in ipairs(self._fails) do
-		local rEffect = self.rPower.aAbilities[iAbility]
-		if not EffectManager.hasEffect(self.rVictim, rEffect.sName) then
+local function _applyEffect(sequence)
+	for _ in ipairs(sequence.fails) do
+		local rEffect = sequence.rPower.aAbilities[sequence.nGate]
+		if not EffectManager.hasEffect(sequence.rVictim, rEffect.sName) then
 			--EffectManager.removeEffect(self.rVictim, rEffect.sName)
-			EffectManager.addEffect("", "", DB.findNode(self.rVictim.sCTNode), rEffect, true)
+			EffectManager.addEffect("", "", DB.findNode(sequence.rVictim.sCTNode), rEffect, true)
 		end
 		return
 	end
 end
 
-function gateManager()
-	MobManager.dbg("++MobSequencer:gateManager(rPower=["..self.rPower.name.."])")
-	self.dump("MobSequencer:gateManager() startup")
-	if MobActionsManager.aMob and self.rPower and self._gateNumber and self._gateNumber <= #self.rPower.aAbilities then
-		MobManager.dbg("MobSequencer:gateManager() _gateNumber=["..self._gateNumber.."]")
-		local thisGate = self._gateNumber
-		self._gateNumber = self._gateNumber + 1
-		MobManager.dbg("MobSequencer:gateManager() _gateNumber=["..self._gateNumber.."], thisGate=["..thisGate.."]")
-		if (self.rPower.aAbilities[thisGate-1].sType) == "damage" then
-			for i,sMobberPath in ipairs(self._misses) do
-				local newMob = {}
-				for j = 1,#MobActionsManager.aMob do
-					if MobActionsManager.aMob[j].sCTNode ~= sMobberPath then
-						table.insert(newMob,UtilityManager.copyDeep(MobActionsManager.aMob[j]))
-					end
-				end
-				MobActionsManager.aMob = newMob
+local function _endSequences(sequence)
+	return function() return end
+end
+
+local function _gateManager(sequence)
+	MobManager.dbg("++MobSequencer:gateManager(rPower=["..sequence.rPower.name.."])")
+	MobManager.dump("MobSequencer:gateManager() startup sequence", sequence)
+
+	for i,sMobberPath in ipairs(sequence.misses) do
+		local newMob = {}
+		for j = 1,#sequence.aMob do
+			if sequence.aMob[j].sCTNode ~= sMobberPath then
+				table.insert(newMob,UtilityManager.copyDeep(sequence.aMob[j]))
 			end
-			if #MobActionsManager.aMob == 0 then
-				self.reset()
-				MobManager.dbg("--MobSequencer:gateManager(): premature exit, everyone missed the previous damage roll")
-				return
-			end
-			self._misses = {}
 		end
-		local sType = self.rPower.aAbilities[thisGate].sType
-		MobManager.dbg("MobSequencer:gateManager() sType=["..sType.."]")
-		if sType == "damage" then
-			self.runDamage(thisGate)
-		elseif sType == "powersave" then
-			self.runSave(thisGate)
-		elseif sType == "effect" then
-			self.applyEffect(thisGate)
-		end
-		if thisGate == #self.rPower.aAbilities then
-			MobManager.dbg("MobSequencer:gateManager() gating complete")
-			self.reset()
-		end
+		sequence.aMob = newMob
 	end
+	sequence.misses = {}
+
+	if #sequence.aMob == 0 then
+		_sequences = {} -- self.reset()
+		MobManager.dbg("--MobSequencer:gateManager(): premature exit, everyone missed the previous damage roll")
+		return _endSequences
+	end
+
+	local sType = sequence.rPower.aAbilities[sequence.nGate].sType or ""
+	if sType == "damage" then
+		_runDamage(sequence)
+	elseif sType == "powersave" then
+		_runSave(sequence)
+	elseif sType == "effect" then
+		_applyEffect(sequence)
+	end
+
+	if sequence.nGate >= sequence.nStopAt then
+		MobManager.dbg("--MobSequencer:gateManager(): _endSequences exit")
+		return _endSequences
+	end
+
+	sequence.nGate = sequence.nGate + 1
 	MobManager.dbg("--MobSequencer:gateManager(): normal exit")
+	return _gateManager
 end
 
-function informFail(rSource)
-	if self._gateNumber then
-		table.insert(self._fails, rSource.sCTNode)
+function informFail(rMobber,rVictim,rRoll)
+	local sMobberClass,sMobberSourcelink = DB.getValue(rMobber.sCTNode..".sourcelink", "-","-")
+	for _,sequence in ipairs(_sequences) do
+		if (
+			rMobber and rVictim and rPower and rRoll and rRoll.sPowerName
+			and sequence.sMobberSourcelink == sMobberSourcelink
+			and sequence.rVictim           == rVictim
+			and sequence.rPower.name       == rRoll.sPowerName
+		) then
+			table.insert(sequence.fails, rSource.sCTNode)
+			return
+		end
 	end
 end
 
-function informMiss(rSource)
-	if self._gateNumber then
-		table.insert(self._misses, rSource.sCTNode)
+function informMiss(rMobber,rVictim,rRoll)
+	local sMobberClass,sMobberSourcelink = DB.getValue(rMobber.sCTNode..".sourcelink", "-","-")
+	for _,sequence in ipairs(_sequences) do
+		if (
+			rMobber and rVictim and rPower and rRoll and rRoll.sPowerName
+			and sequence.sMobberSourcelink == sMobberSourcelink
+			and sequence.rVictim           == rVictim
+			and sequence.rPower.name       == rRoll.sPowerName
+		) then
+			table.insert(sequence.misses, rSource.sCTNode)
+			return
+		end
 	end
 end
 
-function startingGate()
-	self._gateNumber = self._gateNumber + 1
-	self._misses     = {}
-	self._fails      = {}
-end
+function doSequence(rMobber,rVictim,rPower,rRoll)
+	rPower = rPower or MobActionsManager.__resolvePower(rRoll.sDesc, rMobber.sCTNode)
+	MobManager.dbg("++MobSequencer:doSequence(rPower=["..rPower.name.."])")
 
-function getSequencer(rMobber,rVictim,rPower,rRoll)
-	if self._gateNumber and self.rPower and self.rMobber and self.rVictim then return self.gateManager end
-	if rMobber and rVictim and rPower then
-		MobManager.dbg("++MobSequencer:getSequencer(rPower=["..rPower.name.."])")
-		self.sequnce_type = SEQUENCE_nil
-		if rPower and rPower.aAbilities then
-			if #rPower.aAbilities == 2
-			and (
-				   rPower.aAbilities[1].sType == "attack"
-				or rPower.aAbilities[1].sType == "powersave"
-			)
-			and (
-				   rPower.aAbilities[2].sType == "damage"
-				or rPower.aAbilities[2].sType == "effect"
-			)
-			then
-				self.sequnce_type = SEQUENCE_linear
-			elseif #rPower.aAbilities == 3
-			and rPower.aAbilities[1].sType == "powersave"
-			and rPower.aAbilities[2].sType == "damage"
-			and rPower.aAbilities[3].sType == "usage"
-			then
-				self.sequnce_type = SEQUENCE_linear
-			elseif #rPower.aAbilities == 4
-			and rPower.aAbilities[1].sType == "attack"
-			and rPower.aAbilities[2].sType == "damage"
-			and rPower.aAbilities[3].sType == "powersave"
-			and (
-				   rPower.aAbilities[4].sType == "damage"
-				or rPower.aAbilities[4].sType == "effect"
-			)
-			then
-				self.sequnce_type = SEQUENCE_linear
-			elseif #rPower.aAbilities == 4
-			and rPower.aAbilities[1].sType == "attack"
-			and rPower.aAbilities[2].sType == "damage"
-			and rPower.aAbilities[3].sType == "attack"
-			and rPower.aAbilities[4].sType == "damage"
-			and (
-				rPower.aAbilities[1].range == rPower.aAbilities[2].range
-				and
-				rPower.aAbilities[3].range == rPower.aAbilities[4].range
-				and
-				rPower.aAbilities[1].range ~= rPower.aAbilities[3].range
-			)
-			then
-				self.sequnce_type = SEQUENCE_MorR
-				--MobManager.dump("MobSequencer:getSequencer(): SEQUENCE_MorR rPower",rPower)
-				--MobManager.dump("MobSequencer:getSequencer(): SEQUENCE_MorR rRoll",rRoll)
-				for i = 1,3,2 do
-					if rRoll.sRange == rPower.aAbilities[i].range then
-						self._gateNumber = i
-						break
-					end
-				end
+	local sMobberClass,sMobberSourcelink = DB.getValue(rMobber.sCTNode..".sourcelink", "-","-")
+	for _,sequence in ipairs(_sequences) do
+		if (
+			rMobber and rVictim and rPower and rRoll and rRoll.sPowerName
+			and sequence.sMobberSourcelink == sMobberSourcelink
+			and sequence.rVictim           == rVictim
+			and sequence.rPower.name       == rPower.name
+			and sequence.rPower.name       == rRoll.sPowerName
+		) then
+			sequence.rRoll = rRoll
+			sequence.next  = sequence.next(sequence)
+			MobManager.dbg("--MobSequencer:doSequence(): memoized exit")
+			return
+		end
+	end
+
+	if not (rPower and rPower.aAbilities and #rPower.aAbilities > 1) then return end
+	local sequence_type = _decodeSequenceType(rPower)
+	if not sequence_type then
+		MobManager.dbg("--MobSequencer:doSequence(): sequence_type is nil")
+		return
+	end
+
+
+	local sequence = {
+		sMobberSourcelink = sMobberSourcelink,
+		rVictim           = rVictim,
+		rPower            = rPower,
+		rRoll             = rRoll,
+		aMob              = UtilityManager.copyDeep(MobActionsManager.aMob),
+		next              = _gateManager,
+		misses            = {},
+		fails             = {},
+	}
+
+	if sequence_type == SEQUENCE_linear then
+		sequence.nGate = 1
+		sequence.nStopAt = #rPower.aAbilities
+	elseif sequence_type == SEQUENCE_MorR then
+		for i = 1,3,2 do
+			if rRoll.sRange == rPower.aAbilities[i].range then
+				sequence.nGate = i
+				sequence.nStopAt = i + 1
+				break
 			end
 		end
-		if self.sequnce_type then
-			self._gateNumber = self._gateNumber or 1
-			self.rMobber = rMobber
-			self.rVictim = rVictim
-			self.rPower  = rPower
-			self.rRoll = rRoll
-			MobManager.dbg("--MobSequencer:getSequencer(): startingGate exit")
-			return self.startingGate
-		end
-		self.reset()
-		MobActionsManager.aMob = UtilityManager.copyDeep(MobActionsManager.aMob_shadow)
-		MobManager.dbg("--MobSequencer:getSequencer(): nil exit")
 	end
+
+	table.insert(_sequences,sequence)
+
+	sequence.next  = sequence.next(sequence)
+
+	MobManager.dbg("--MobSequencer:doSequence(): nil exit")
 end

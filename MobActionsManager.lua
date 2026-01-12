@@ -29,7 +29,7 @@ aPowerTypes = {
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-local function __resolvePower(sRollDesc,sMobberPath)
+function __resolvePower(sRollDesc,sMobberPath)
 	MobManager.dbg("++MobActionsManager:__resolvePower()")
 	local sRolledPower = StringManager.simplify(StringManager.sanitize(sRollDesc:gsub("%[[^%]]*%]","")))
 	MobManager.dbg("MobActionsManager:__resolvePower() sRolledPower=["..sRolledPower.."]")
@@ -97,7 +97,7 @@ function invalidate()
 	self.sMobCreatureBasename = nil
 
 	self._pendingRolls        = {}
-	
+
 	self.unregisterHandlers()
 end
 --------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ function setData(rMobber,rVictim,aMob)
 
 	MobLedger.reset()
 	MobHitTracker.reset()
-	MobSequencer.reset()
+	MobSequencer._sequences   = {}
 	self._pendingRolls        = {}
 
 	self.registerHandlers()
@@ -219,8 +219,7 @@ function onMobAttackRoll(rSource, rTarget, rRoll)
 		return
 	end
 	local rPower = __resolvePower(rRoll.sDesc, rSource.sCTNode)
-	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower,rRoll)
-	if seqFn == MobSequencer.startingGate then seqFn() end
+	MobSequencer.doSequence(rSource,rTarget,rPower,rRoll)
 	self.reportMobAttackStarting()
 
 	-- The "primary key" for an individual mob attack is:
@@ -306,7 +305,6 @@ function reportMobAttackComplete(rRoll)
 	else sResultMsg = sResultMsg .. "No damage was dealt.  " end
 	__sendChatMessage(sResultMsg)
 	self.reTargetVictim()
-	MobManager.sendAutoEndTurn()
 end
 --------------------------------------------------------------------------------
 function onMobAttackResult(rSource, rTarget, rRoll)
@@ -324,15 +322,14 @@ function onMobAttackResult(rSource, rTarget, rRoll)
 				MobLedger.addEntry(rRoll, rSource.sCTNode)
 			else
 				self.deductPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage")
-				MobSequencer.informMiss(rSource)
+				MobSequencer.informMiss(rSource,rTarget,rRoll)
 			end
 			if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"attack") or 0) == 0 then
 				self.reportMobAttackInProgress(rRoll,rSource.sCTNode)
 				if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 					self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
 				end
-				local seqFn = MobSequencer.getSequencer()
-				if seqFn then seqFn() end
+				MobSequencer.doSequence(rSource,rTarget,rPower,rRoll)
 			end
 		end
 	end
@@ -388,8 +385,7 @@ function onMobDamageResult(rSource,rTarget,rRoll)
 			self.deductPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage")
 			if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 				self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
-				local seqFn = MobSequencer.getSequencer()
-				if seqFn then seqFn() end
+				MobSequencer.doSequence(rSource,rTarget,rPower,rRoll)
 			end
 		end
 	end
@@ -409,8 +405,7 @@ function onMobPowersaveRoll(rSource,rTarget,rRoll)
 		return
 	end
 	local rPower = __resolvePower(rRoll.sDesc, rSource.sCTNode)
-	seqFn = MobSequencer.getSequencer(rSource,rTarget,rPower,rRoll)
-	if seqFn == MobSequencer.startingGate then seqFn() end
+	MobSequencer.doSequence(rSource,rTarget,rPower,rRoll)
 	self.reportMobAttackStarting()
 
 	rRoll.iMobAttackID = MobHitTracker.startTrackingHits(rPower.name, self.aMob)
@@ -503,12 +498,12 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 	
 	if rRoll.sDesc:match("%[AUTOFAIL%]") then
 		rRoll.sResults = "[AUTOFAIL]"
-		MobSequencer.informFail(rMobber)
+		MobSequencer.informFail(rMobber,self.rVictim,rRoll)
 	elseif rRoll.nTotal >= rRoll.nTarget then
 		rRoll.sResults = "[SUCCESS]";
 	else
 		rRoll.sResults = "[FAILURE]";
-		MobSequencer.informFail(rMobber)
+		MobSequencer.informFail(rMobber,self.rVictim,rRoll)
 	end
 
 	MobHitTracker.logResult(rMobber,rRoll)
@@ -532,8 +527,7 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 		if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 			self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
 		end
-		local seqFn = MobSequencer.getSequencer()
-		if seqFn then seqFn() end
+		MobSequencer.doSequence(rSource,rTarget,rPower,rRoll)
 	end
 
 	MobManager.dump("MobActionsManager:onMobSaveResult() dump rSource", rSource)
