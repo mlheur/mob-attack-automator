@@ -210,7 +210,7 @@ function doSequence(rMobber,rVictim,rPower,rRoll)
 
 	table.insert(_sequences,sequence)
 
-	sequence.next  = sequence.next(sequence)
+	sequence.next = sequence.next(sequence)
 
 	MobManager.dbg("--MobSequencer:doSequence(): nil exit")
 end
