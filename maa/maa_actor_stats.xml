@@ -39,7 +39,7 @@
 			<activate /><nodrag /><nodrop />
 			<readonly/>
 			<font name="sheetnumber" />
-			<frame name="fieldlight" />
+			<frame name="fielddark" />
 			<anchored width="50" height="35">
 				<top offset="9"/>
 				<left parent="leftanchor" relation="relative" postoffset="-5" />
