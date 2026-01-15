@@ -5,11 +5,15 @@ local SEQUENCE_MorR    = 2
 
 function nextActor(sVictimCTNode)
 	MobManager.dbg("++MobSequencer:nextActor()")
-	MobActionsManager.reTargetVictim() -- hack solution...  This means I have a poor understanding of the problem :(
+	MobActionsManager.reTargetVictim(sVictimCTNode) -- hack solution...  This means I have a poor understanding of the problem :(
 	self.bRetargetCalled = true
 	if (self._gateNumber == nil) or (MobActionsManager.aMob and self._gateNumber and self._gateNumber >= #MobActionsManager.aMob) then
-		CombatManager.nextActor(sVictimCTNode)
-		MobManager.dbg("MobSequencer:nextActor(): called CombatManager.nextActor()")
+		MobManager.dbg("MobSequencer:nextActor(): gates passed")
+		local rActor = ActorManager.resolveActor(CombatManager.getActiveCT())
+		if EffectManager.hasEffect(rActor,"SKIPTURN") then
+			CombatManager.nextActor()
+			MobManager.dbg("MobSequencer:nextActor(): called CombatManager.nextActor()")
+		end
 	end
 	MobManager.dbg("--MobSequencer:nextActor(): normal exit")
 end
