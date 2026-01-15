@@ -3,6 +3,17 @@ local SEQUENCE_nil     = nil
 local SEQUENCE_linear  = 1
 local SEQUENCE_MorR    = 2
 
+function nextActor(sVictimCTNode)
+	MobManager.dbg("++MobSequencer:nextActor()")
+	MobActionsManager.reTargetVictim() -- hack solution...  This means I have a poor understanding of the problem :(
+	self.bRetargetCalled = true
+	if (self._gateNumber == nil) or (MobActionsManager.aMob and self._gateNumber and self._gateNumber >= #MobActionsManager.aMob) then
+		CombatManager.nextActor(sVictimCTNode)
+		MobManager.dbg("MobSequencer:nextActor(): called CombatManager.nextActor()")
+	end
+	MobManager.dbg("--MobSequencer:nextActor(): normal exit")
+end
+
 function reset()
 	self._gateNumber = nil
 	self._misses     = {}
@@ -74,13 +85,17 @@ function gateManager()
 		local sType = self.rPower.aAbilities[thisGate].sType
 		MobManager.dbg("MobSequencer:gateManager() sType=["..sType.."]")
 		if sType == "damage" then
-			self.runDamage(thisGate)
+			if self._misses and MobActionsManager.aMob and #self._misses == #MobActionsManager.aMob then
+				self.reset()
+			else
+				self.runDamage(thisGate)
+			end
 		elseif sType == "powersave" then
 			self.runSave(thisGate)
 		elseif sType == "effect" then
 			self.applyEffect(thisGate)
 		end
-		if thisGate == #self.rPower.aAbilities then
+		if (not self.rPower) or (self.rPower and thisGate == #self.rPower.aAbilities) then
 			MobManager.dbg("MobSequencer:gateManager() gating complete")
 			self.reset()
 		end
@@ -112,44 +127,46 @@ function getSequencer(rMobber,rVictim,rPower,rRoll)
 		MobManager.dbg("++MobSequencer:getSequencer(rPower=["..rPower.name.."])")
 		self.sequnce_type = SEQUENCE_nil
 		if rPower and rPower.aAbilities then
-			if #rPower.aAbilities == 2
-			and (
-				   rPower.aAbilities[1].sType == "attack"
-				or rPower.aAbilities[1].sType == "powersave"
-			)
-			and (
-				   rPower.aAbilities[2].sType == "damage"
-				or rPower.aAbilities[2].sType == "effect"
-			)
-			then
+			if (
+				#rPower.aAbilities == 2
+				and (
+					rPower.aAbilities[1].sType == "attack"
+					or rPower.aAbilities[1].sType == "powersave"
+				)
+				and (
+					rPower.aAbilities[2].sType == "damage"
+					or rPower.aAbilities[2].sType == "effect"
+				)
+			)or(
+				#rPower.aAbilities == 3
+				and rPower.aAbilities[1].sType == "powersave"
+				and rPower.aAbilities[2].sType == "damage"
+				and rPower.aAbilities[3].sType == "usage"
+			)or(
+				#rPower.aAbilities == 4
+				and rPower.aAbilities[1].sType == "attack"
+				and rPower.aAbilities[2].sType == "damage"
+				and rPower.aAbilities[3].sType == "powersave"
+				and (
+					rPower.aAbilities[4].sType == "damage"
+					or rPower.aAbilities[4].sType == "effect"
+				)
+			) then
 				self.sequnce_type = SEQUENCE_linear
-			elseif #rPower.aAbilities == 3
-			and rPower.aAbilities[1].sType == "powersave"
-			and rPower.aAbilities[2].sType == "damage"
-			and rPower.aAbilities[3].sType == "usage"
-			then
-				self.sequnce_type = SEQUENCE_linear
-			elseif #rPower.aAbilities == 4
-			and rPower.aAbilities[1].sType == "attack"
-			and rPower.aAbilities[2].sType == "damage"
-			and rPower.aAbilities[3].sType == "powersave"
-			and (
-				   rPower.aAbilities[4].sType == "damage"
-				or rPower.aAbilities[4].sType == "effect"
-			)
-			then
-				self.sequnce_type = SEQUENCE_linear
-			elseif #rPower.aAbilities == 4
-			and rPower.aAbilities[1].sType == "attack"
-			and rPower.aAbilities[2].sType == "damage"
-			and rPower.aAbilities[3].sType == "attack"
-			and rPower.aAbilities[4].sType == "damage"
-			and (
-				rPower.aAbilities[1].range == rPower.aAbilities[2].range
-				and
-				rPower.aAbilities[3].range == rPower.aAbilities[4].range
-				and
-				rPower.aAbilities[1].range ~= rPower.aAbilities[3].range
+			elseif
+			(
+				#rPower.aAbilities == 4
+				and rPower.aAbilities[1].sType == "attack"
+				and rPower.aAbilities[2].sType == "damage"
+				and rPower.aAbilities[3].sType == "attack"
+				and rPower.aAbilities[4].sType == "damage"
+				and (
+					rPower.aAbilities[1].range == rPower.aAbilities[2].range
+					and
+					rPower.aAbilities[3].range == rPower.aAbilities[4].range
+					and
+					rPower.aAbilities[1].range ~= rPower.aAbilities[3].range
+				)
 			)
 			then
 				self.sequnce_type = SEQUENCE_MorR
@@ -165,10 +182,10 @@ function getSequencer(rMobber,rVictim,rPower,rRoll)
 		end
 		if self.sequnce_type then
 			self._gateNumber = self._gateNumber or 1
-			self.rMobber = rMobber
-			self.rVictim = rVictim
-			self.rPower  = rPower
-			self.rRoll = rRoll
+			self.rMobber     = rMobber
+			self.rVictim     = rVictim
+			self.rPower      = rPower
+			self.rRoll       = rRoll
 			MobManager.dbg("--MobSequencer:getSequencer(): startingGate exit")
 			return self.startingGate
 		end

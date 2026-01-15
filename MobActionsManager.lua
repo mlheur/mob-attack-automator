@@ -292,11 +292,13 @@ function reportMobAttackInProgress(rRoll,sMobberPath)
 	MobManager.dbg("--MobActionsManager:reportMobAttackInProgress(): normal exit")
 end
 --------------------------------------------------------------------------------
-function reTargetVictim()
+function reTargetVictim(sVictimCTNode)
+	MobManager.dbg("++MobActionsManager:reTargetVictim()")
 	self.aMob = UtilityManager.copyDeep(self.aMob_shadow)
 	for i,rMobber in ipairs(self.aMob) do
-		TargetingManager.notifyAddTarget(rMobber.sCTNode,self.rVictim.sCTNode)
+		TargetingManager.notifyAddTarget(rMobber.sCTNode,sVictimCTNode)
 	end
+	MobManager.dbg("--MobActionsManager:reTargetVictim(): normal exit")
 end
 --------------------------------------------------------------------------------
 function reportMobAttackComplete(rRoll)
@@ -305,11 +307,15 @@ function reportMobAttackComplete(rRoll)
 	if iTotal > 0 then sResultMsg = sResultMsg .. "A total of " .. iTotal .. " damage was dealt.  "
 	else sResultMsg = sResultMsg .. "No damage was dealt.  " end
 	__sendChatMessage(sResultMsg)
-	self.reTargetVictim()
+	if MobSequencer.bRetargetCalled then
+		self.reTargetVictim(self.rVictim.sCTNode)
+	end
+	MobSequencer.bRetargetCalled = false
 end
 --------------------------------------------------------------------------------
 function onMobAttackResult(rSource, rTarget, rRoll)
 	MobManager.dbg("++MobActionsManager:onMobAttackResult() ::: Called by the game engine from our ActionsManager.AddResultHandler() submission")
+	local bTriggerNextActor = false
 	if not rRoll.bInterceptDestroy then
 		ActionAttack.onAttack(rSource, rTarget, rRoll)
 		MobManager.dump("MobActionsManager:onMobAttackResult() dump rSource", rSource)
@@ -329,12 +335,14 @@ function onMobAttackResult(rSource, rTarget, rRoll)
 				self.reportMobAttackInProgress(rRoll,rSource.sCTNode)
 				if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 					self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
+					bTriggerNextActor = true
 				end
 				local seqFn = MobSequencer.getSequencer()
 				if seqFn then seqFn() end
 			end
 		end
 	end
+	if bTriggerNextActor and self.rVictim then MobSequencer.nextActor(self.rVictim.sCTNode) end
 	MobManager.dbg("--MobActionsManager:onMobAttackResult(): normal exit ::: Return to game engine")
 end
 --------------------------------------------------------------------------------
@@ -376,6 +384,7 @@ end
 --------------------------------------------------------------------------------
 function onMobDamageResult(rSource,rTarget,rRoll)
 	MobManager.dbg("++MobActionsManager:onMobDamageResult() ::: Called by the game engine from our ActionsManager.AddResultHandler() submission")
+	local bTriggerNextActor = false
 	if not rRoll.bInterceptDestroy then
 		ActionDamage.onDamage(rSource,rTarget,rRoll)
 		MobManager.dump("MobActionsManager:onMobDamageResult() dump rSource", rSource)
@@ -387,11 +396,13 @@ function onMobDamageResult(rSource,rTarget,rRoll)
 			self.deductPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage")
 			if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 				self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
+				bTriggerNextActor = true
 				local seqFn = MobSequencer.getSequencer()
 				if seqFn then seqFn() end
 			end
 		end
 	end
+	if bTriggerNextActor and self.rVictim then MobSequencer.nextActor(self.rVictim.sCTNode) end
 	MobManager.dbg("--MobActionsManager:onMobDamageResult(): normal exit ::: Return to game engine")
 end
 --------------------------------------------------------------------------------
@@ -526,10 +537,12 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 		end
 	end
 
+	local bTriggerNextActor = false
 	if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"save") or 0) == 0 then
 		self.reportMobAttackInProgress(rRoll,rMobber.sCTNode)
 		if (self.hasPendingRoll(rRoll.sPowerName,rRoll.iMobAttackID,"damage") or 0) == 0 then
 			self.reportMobAttackComplete({sPowerName=rRoll.sPowerName,iMobAttackID=rRoll.iMobAttackID})
+			bTriggerNextActor = true
 		end
 		local seqFn = MobSequencer.getSequencer()
 		if seqFn then seqFn() end
@@ -541,6 +554,7 @@ function onMobSaveResult(rSource,rTarget,rRoll)
 	MobManager.dump("MobActionsManager:onMobSaveResult() dump rRoll", rRoll)
 	MobManager.dump("MobActionsManager:onMobSaveResult() dump rPower", rPower)
 
+	if bTriggerNextActor and self.rVictim then MobSequencer.nextActor(self.rVictim.sCTNode) end
 	MobManager.dbg("--MobActionsManager:onMobSaveResult(): normal exit ::: Return to game engine")
 end
 --------------------------------------------------------------------------------
